@@ -1,70 +1,63 @@
-import api from "@/api/Ap";
 import { createContext, useContext, useState, useEffect } from "react";
 
-// import api from "@/api/Api";
-
 const AuthContext = createContext(null);
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
+// ── Hardcoded users (API কাজ না করলে এখান থেকে login হবে) ──────────────
+const MOCK_USERS = [
+  {
+    username: "admin",
+    password: "123456",
+    data: { id: 1, name: "Admin User", role: "admin", username: "admin" },
+  },
+  {
+    username: "user",
+    password: "user123",
+    data: { id: 2, name: "Regular User", role: "user", username: "user" },
+  },
+];
+
+const SESSION_KEY = "auth_user";
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // store user data
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Check session on page reload
-   const checkSession = async () => {
+  // ── Page reload এ localStorage থেকে session restore করো ────────────────
+  useEffect(() => {
     try {
-      const res = await api.get("/sessionCheck.php");
-
-      if (res.data.logged_in) {
-        setUser(res.data.user);
-      } else {
-        setUser(null);
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (saved) {
+        setUser(JSON.parse(saved));
       }
-    } catch (error) {
-      console.log("Session error", error);
-      setUser(null);
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
     } finally {
       setLoading(false);
     }
-  };
-
-  // 🔹 Check session on initial load
-  useEffect(() => {
-    checkSession();
   }, []);
 
-  // 🔹 Login function
+  // ── Login ────────────────────────────────────────────────────────────────
   const login = async (username, password) => {
-    try {
-      const res = await api.put(
-        "/login.php",
-        { username, password },
-       
-      );
-      console.log(res.data)
+    const match = MOCK_USERS.find(
+      (u) => u.username === username && u.password === password
+    );
 
-      if (res.data.success) {
-        setUser(res.data.data); // store user
-        return true;
-      }
-    } catch (error) {
-      console.log("Login Failed", error);
-      return false;
+    if (match) {
+      setUser(match.data);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(match.data));
+      return true;
     }
+
+    return false;
   };
 
-  // 🔹 Logout function
-  const logout = async () => {
-    try {
-      await api.get(
-        "/logout.php",
-       
-      );
-      setUser(null);
-    } catch (error) {
-      console.log("Logout error", error);
-    }
+  // ── Logout ───────────────────────────────────────────────────────────────
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem(SESSION_KEY);
   };
 
   return (

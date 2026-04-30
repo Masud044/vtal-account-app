@@ -185,7 +185,7 @@ export default function CashTransferTable() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-gray-500 hover:text-violet-700"
+                  className="h-8 w-8  hover:text-violet-700"
                   title="Download"
                   disabled={downloading?.startsWith(`${voucher.ID}-`)}
                 >

@@ -1,33 +1,53 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import Select from "react-select";
-
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-
 import { toast } from "react-toastify";
-// import api from "@/api/Ap";
+import axios from "axios";
 
 import { SectionContainer } from "@/components/SectionContainer";
 import { PaymentService } from "@/api/AccontingApi";
 import PaymentTable from "../components/PaymentTable";
-import { Button } from "@/components/ui/button";
-import axios from "axios";
 
-const url  = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select as ShadSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+
+const url = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 const Payment = () => {
   const { voucherId } = useParams();
+
   useEffect(() => {
-    window.scrollTo({
-      top: 80,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 80, behavior: "smooth" });
   }, [voucherId]);
 
   const queryClient = useQueryClient();
-
-  console.log(voucherId);
   const today = new Date().toISOString().split("T")[0];
 
   const [rows, setRows] = useState([
@@ -38,7 +58,7 @@ const Payment = () => {
       amount: 0,
       debitId: null,
       creditId: null,
-      isNew: false, // ✅ Track if row is newly added during edit
+      isNew: false,
     },
   ]);
   const [message, setMessage] = useState("");
@@ -63,8 +83,7 @@ const Payment = () => {
   const { data: suppliers = [] } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
-      // const res = await api.get("/supplier.php");
-         const res = await axios.get(`${url}/api/supplier-type`);
+      const res = await axios.get(`${url}/api/supplier-type`);
       return res.data.data || [];
     },
   });
@@ -72,37 +91,15 @@ const Payment = () => {
   const { data: PaymentCodes = [] } = useQuery({
     queryKey: ["paymentCodes"],
     queryFn: async () => {
-      // const res = await api.get("/receive_code.php");
       const res = await axios.get(`${url}/api/receive-code`);
-     
       return res.data.success === true ? res.data.data || [] : [];
     },
   });
 
-  // const { data: accounts = [] } = useQuery({
-  //   queryKey: ["accounts"],
-  //   queryFn: async () => {
-  //     // const res = await api.get("/account_code.php");
-  //     const res = await axios.get(`${url}/api/account-code`);
-
-  //     if (res.data.success === 1) {
-  //       return res.data.data.map((acc) => ({
-  //         value: acc.ACCOUNT_ID,
-  //         label: `${acc.ACCOUNT_ID} - ${acc.ACCOUNT_NAME}`,
-  //         name: acc.ACCOUNT_NAME,
-  //       }));
-  //     }
-  //     return [];
-  //   },
-  // });
-
- 
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
-      // const res = await api.get("/rec_account_code.php");
       const res = await axios.get(`${url}/api/receive-account-code`);
-      
       if (res.data.success === true) {
         return res.data.data.map((acc) => ({
           value: acc.ACCOUNT_ID,
@@ -124,74 +121,44 @@ const Payment = () => {
     enabled: !!voucherId && accounts.length > 0,
   });
 
-  console.log("data", voucherData);
-
   const toInputDate = (raw) => {
-  if (!raw) return "";
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return "";
-  const year  = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day   = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+    if (!raw) return "";
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
     if (voucherId && voucherData?.status === "success" && accounts.length > 0) {
       const master = voucherData.master || {};
       const details = voucherData.details || [];
-      console.log("Master:", master);
-      console.log("Details:", details);
-      console.log("REFETCH DATA", voucherData.details)
 
-
-      // ✅ Find credit entry (payment account)
-      // const creditEntry = details.find((d) => d.credit && Number(d.credit) > 0);
       const creditEntry = details.find((d) => d.CREDIT && Number(d.CREDIT) > 0);
-      console.log("Credit Entry:", creditEntry);
 
-      // ✅ Get debit entries (existing rows from database)
       const mappedRows = details
-         .filter((d) => d.DEBIT && Number(d.DEBIT) > 0) 
+        .filter((d) => d.DEBIT && Number(d.DEBIT) > 0)
         .map((d, i) => {
-        const account = accounts.find((acc) => acc.value === d.CODE);
-          // return {
-          //   id: d.id || `${d.code}-${i}`,
-          //   accountCode: d.code,
-          //   particulars: d.codedescription || (account ? account.label : ""),
-          //   amount: parseFloat(d.debit),
-          //   debitId: d.id,
-          //   creditId: null,
-          //   isNew: false, // ✅ Existing rows from database
-          // };
+          const account = accounts.find((acc) => acc.value === d.CODE);
           return {
-          id: d.ID || `${d.CODE}-${i}`,           // ✅ uppercase
-          accountCode: d.CODE,                      // ✅ uppercase
-          particulars: d.CODEDESCRIPTION || (account ? account.label : ""), // ✅ uppercase
-          amount: parseFloat(d.DEBIT),              // ✅ uppercase
-          debitId: d.ID,                            // ✅ uppercase
-          creditId: null,
-          isNew: false,
-        };
+            id: d.ID || `${d.CODE}-${i}`,
+            accountCode: d.CODE,
+            particulars: d.CODEDESCRIPTION || (account ? account.label : ""),
+            amount: parseFloat(d.DEBIT),
+            debitId: d.ID,
+            creditId: null,
+            isNew: false,
+          };
         });
 
-      const total = mappedRows.reduce(
-        (sum, r) => sum + Number(r.amount || 0),
-        0
-      );
-
-      console.log("Setting creditId:", creditEntry?.id);
+      const total = mappedRows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
       setForm((prev) => ({
         ...prev,
-        // entryDate: master.TRANS_DATE
-        //   ? new Date(master.TRANS_DATE).toISOString().split("T")[0]
-        //   : new Date().toISOString().split("T")[0],
-        // glDate: master.GL_ENTRY_DATE
-        //   ? new Date(master.GL_ENTRY_DATE).toISOString().split("T")[0]
-        //   : new Date().toISOString().split("T")[0],
-        entryDate: toInputDate(master.TRANS_DATE),   // ✅ DB থেকে আসা date
-  glDate:    toInputDate(master.GL_ENTRY_DATE), // ✅ DB থেকে আসা date
+        entryDate: toInputDate(master.TRANS_DATE),
+        glDate: toInputDate(master.GL_ENTRY_DATE),
         invoiceNo: master.VOUCHERNO || "",
         supporting: master.SUPPORTING || "",
         description: master.DESCRIPTION || "",
@@ -211,25 +178,17 @@ const Payment = () => {
   // ---------- MUTATION ----------
   const mutation = useMutation({
     mutationFn: async ({ isNew, payload }) => {
-      let res;
-      if (isNew) {
-        res = await PaymentService.insert(payload);
-      } else {
-        res = await PaymentService.update(payload);
-      }
-      console.log("📤 Backend Response:", res.data);
+      const res = isNew
+        ? await PaymentService.insert(payload)
+        : await PaymentService.update(payload);
       return res.data;
     },
     onSuccess: async (data, variables) => {
       if (data.status === "success") {
         toast.success(
-          variables.isNew
-            ? "Voucher created successfully!"
-            : "Voucher updated successfully!"
+          variables.isNew ? "Voucher created successfully!" : "Voucher updated successfully!"
         );
-
         if (variables.isNew) {
-          // ✅ For new voucher, reset form
           setForm({
             entryDate: today,
             invoiceNo: "",
@@ -246,23 +205,15 @@ const Payment = () => {
           });
           setRows([]);
         } else {
-          // ✅ For update, refetch the voucher data to get updated IDs
-          console.log("🔄 Refetching voucher data...");
           await queryClient.invalidateQueries(["voucher", voucherId]);
-          
-          // Wait a bit for the query to refetch
-          setTimeout(() => {
-            queryClient.refetchQueries(["voucher", voucherId]);
-          }, 500);
+          setTimeout(() => queryClient.refetchQueries(["voucher", voucherId]), 500);
         }
-
         queryClient.invalidateQueries(["unpostedVouchers"]);
       } else {
         toast.error("Error processing voucher.");
       }
     },
-    onError: (error) => {
-      console.error("❌ Mutation Error:", error);
+    onError: () => {
       toast.error("Error submitting voucher. Please try again.");
     },
     onSettled: () => {
@@ -276,82 +227,46 @@ const Payment = () => {
       toast.error("Please select account and enter amount");
       return;
     }
-
     const account = accounts.find((acc) => acc.value === form.accountId);
-    
     const newRow = {
-      // id: `new-${Date.now()}`, // ✅ Temporary ID for new rows
-       id: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-
+      id: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       accountCode: form.accountId,
       particulars: form.particular || (account ? account.label : ""),
       amount: parseFloat(form.amount),
-      debitId: null, // ✅ No debitId for new rows
+      debitId: null,
       creditId: null,
-      isNew: true, // ✅ Mark as new row
+      isNew: true,
     };
-
-    let updatedRows;
-    if (rows.length === 1 && rows[0].id === "dummy") {
-      updatedRows = [newRow];
-    } else {
-      updatedRows = [...rows, newRow];
-    }
-
+    const updatedRows =
+      rows.length === 1 && rows[0].id === "dummy" ? [newRow] : [...rows, newRow];
     const total = updatedRows.reduce((sum, r) => sum + Number(r.amount), 0);
-
     setRows(updatedRows);
-    setForm({
-      ...form,
-      accountId: "",
-      particular: "",
-      amount: "",
-      totalAmount: total,
-    });
-
-    
+    setForm({ ...form, accountId: "", particular: "", amount: "", totalAmount: total });
   };
 
   const updateRow = (id, field, value) => {
     const updatedRows = rows.map((row) => {
-      if (row.id === id) {
-        const updatedRow = { ...row };
-
-        if (field === "amount") {
-          updatedRow.amount = Number(value) || 0;
-        } else if (field === "accountCode") {
-          updatedRow.accountCode = value;
-          const account = accounts.find((acc) => acc.value === value);
-          if (account) {
-            updatedRow.particulars = account.label;
-          }
-        } else if (field === "particulars") {
-          updatedRow.particulars = value;
-        }
-
-        return updatedRow;
+      if (row.id !== id) return row;
+      const updatedRow = { ...row };
+      if (field === "amount") {
+        updatedRow.amount = Number(value) || 0;
+      } else if (field === "accountCode") {
+        updatedRow.accountCode = value;
+        const account = accounts.find((acc) => acc.value === value);
+        if (account) updatedRow.particulars = account.label;
+      } else if (field === "particulars") {
+        updatedRow.particulars = value;
       }
-      return row;
+      return updatedRow;
     });
-
-    const total = updatedRows.reduce(
-      (sum, r) => sum + Number(r.amount || 0),
-      0
-    );
-
+    const total = updatedRows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
     setRows(updatedRows);
-    setForm((prev) => ({
-      ...prev,
-      totalAmount: total,
-    }));
+    setForm((prev) => ({ ...prev, totalAmount: total }));
   };
 
   const removeRow = (id) => {
     const updatedRows = rows.filter((r) => r.id !== id);
-    const total = updatedRows.reduce(
-      (sum, r) => sum + Number(r.amount || 0),
-      0
-    );
+    const total = updatedRows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
     setRows(updatedRows);
     setForm({ ...form, totalAmount: total });
   };
@@ -362,27 +277,20 @@ const Payment = () => {
 
     if (
       isNew &&
-      (!form.entryDate ||
-        !form.glDate ||
-        !form.description ||
-        !form.paymentCode ||
-        !form.supplier ||
-        rows.length === 0)
+      (!form.entryDate || !form.glDate || !form.description ||
+        !form.paymentCode || !form.supplier || rows.length === 0)
     ) {
       toast.error("Please fill all required fields and add at least one row.");
       return;
     }
 
-    const invalidRow = rows.some((row) => !row.accountCode || !row.particulars);
-
-    if (invalidRow) {
+    if (rows.some((row) => !row.accountCode || !row.particulars)) {
       toast.error("Each row must have Account Code and Particular filled.");
       return;
     }
 
     let payload = {};
     if (isNew) {
-      // ✅ NEW VOUCHER - All rows are new
       payload = {
         trans_date: form.entryDate,
         gl_date: form.glDate,
@@ -396,15 +304,8 @@ const Payment = () => {
         amount2: rows.map((r) => String(r.amount || 0)),
       };
     } else {
-      // ✅ UPDATE VOUCHER - Separate existing and new rows
       const existingRows = rows.filter((r) => !r.isNew);
       const newRows = rows.filter((r) => r.isNew);
-
-      console.log("🔍 All Rows:", rows);
-      console.log("🔍 Existing Rows:", existingRows);
-      console.log("🔍 New Rows:", newRows);
-
-      // ✅ Build payload with both existing and new rows
       payload = {
         masterID: Number(voucherId),
         trans_date: form.entryDate,
@@ -416,414 +317,388 @@ const Payment = () => {
         totalAmount: Number(form.totalAmount),
         supporting: String(form.supporting),
       };
-
-      // ✅ Add existing rows data
       if (existingRows.length > 0) {
-       payload.DEBIT_ID = existingRows.map(r => Number(r.debitId))
-payload.acode = existingRows.map(r => r.accountCode)
-payload.amount2 = existingRows.map(r => Number(r.amount))
-payload.CODEDESCRIPTION = existingRows.map(r => r.particulars)
-payload.DESCRIPTION = existingRows.map(r => r.particulars)
-
+        payload.DEBIT_ID = existingRows.map((r) => Number(r.debitId));
+        payload.acode = existingRows.map((r) => r.accountCode);
+        payload.amount2 = existingRows.map((r) => Number(r.amount));
+        payload.CODEDESCRIPTION = existingRows.map((r) => r.particulars);
+        payload.DESCRIPTION = existingRows.map((r) => r.particulars);
       }
-
-      // ✅ Add new rows data (these will get new IDs from backend)
       if (newRows.length > 0) {
-        payload.NEW_ACODE = newRows.map(r => r.accountCode)
-payload.NEW_AMOUNT = newRows.map(r => Number(r.amount))
-payload.NEW_CODEDESCRIPTION = newRows.map(r => r.particulars)
-payload.NEW_DESCRIPTION = newRows.map(r => r.particulars)
-
+        payload.NEW_ACODE = newRows.map((r) => r.accountCode);
+        payload.NEW_AMOUNT = newRows.map((r) => Number(r.amount));
+        payload.NEW_CODEDESCRIPTION = newRows.map((r) => r.particulars);
+        payload.NEW_DESCRIPTION = newRows.map((r) => r.particulars);
       }
-
-      console.log("✅ Final Update Payload:", JSON.stringify(payload, null, 2));
     }
 
     mutation.mutate({ isNew, payload });
   };
 
- 
-
   return (
     <SectionContainer>
-      <div className="">
-        {/* Top Form */}
-        <div className=" p-6 space-y-6 bg-white rounded-lg shadow-md">
-          {message && (
-            <p className="text-center text-red-600 font-medium mt-2 mb-2">
-              {message}
-            </p>
-          )}
+      <div className="space-y-4">
+        <Card className="shadow-md">
+          <CardContent className="p-6 space-y-6">
+            {message && (
+              <p className="text-center text-destructive font-medium">{message}</p>
+            )}
 
-          <div className="grid grid-cols-1 md:grid-cols-[150px_1fr_1fr] gap-4  bg-white  rounded-lg">
-            {/* bill system */}
-            <div className=" bg-gray-200 border-black">
-              <h1 className=" text-center py-10">this is bill</h1>
-            </div>
-            {/* suppliers */}
-            <div className="">
-              <div className="grid grid-cols-3 opacity-60  px-3 items-center py-3">
-                <label className="font-medium block text-xs  text-foreground">
-                  Supplier
-                </label>
-                <select
-                  value={form.supplier}
-                  onChange={(e) =>
-                    setForm({ ...form, supplier: e.target.value })
-                  }
-                  className="col-span-2 w-full border rounded py-1 h-8  bg-white "
-                >
-                  <option value="">Select Supplier</option>
-                  {suppliers.map((sup) => (
-                    <option key={sup.SUPPLIER_ID} value={sup.SUPPLIER_ID}>
-                      {sup.SUPPLIER_NAME}
-                    </option>
-                  ))}
-                </select>
+            {/* ── Top 3-column grid ── */}
+            <div className="grid grid-cols-1 md:grid-cols-[150px_1fr_1fr] gap-4">
+
+              {/* Bill placeholder */}
+              <div className="bg-muted border rounded-lg flex items-center justify-center">
+                <h1 className="text-center py-10 text-sm text-muted-foreground">
+                  this is bill
+                </h1>
+              </div>
+
+              {/* Supplier */}
+              <div >
+                <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
+                  <Label className=" font-medium text-muted-foreground">Supplier</Label>
+                  <div className="col-span-2">
+                    <ShadSelect
+                      value={form.supplier}
+                      onValueChange={(val) => setForm({ ...form, supplier: val })}
+                    >
+                      <SelectTrigger className="h-8 ">
+                        <SelectValue placeholder="Select Supplier" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {suppliers.map((sup) => (
+                          <SelectItem key={sup.SUPPLIER_ID} value={sup.SUPPLIER_ID} className="text-xs">
+                            {sup.SUPPLIER_NAME}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </ShadSelect>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment fields */}
+              <div className=" space-y-0.5">
+
+                {/* Entry Date */}
+                <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
+                  <Label className=" font-medium text-muted-foreground">Entry Date</Label>
+                  <div className="col-span-2">
+                    <Input
+                      type="date"
+                      value={form.entryDate}
+                      onChange={(e) => setForm({ ...form, entryDate: e.target.value })}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Invoice No */}
+                <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
+                  <Label className=" font-medium text-muted-foreground">Invoice No</Label>
+                  <div className="col-span-2">
+                    <Input
+                      type="text"
+                      value={form.invoiceNo}
+                      onChange={(e) => setForm({ ...form, invoiceNo: e.target.value })}
+                      disabled={!voucherId}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* No. of Supporting */}
+                <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
+                  <Label className=" font-medium text-muted-foreground">No. of Supporting</Label>
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      value={form.supporting}
+                      onChange={(e) => setForm({ ...form, supporting: e.target.value })}
+                      className="h-8 text-xs w-40"
+                    />
+                  </div>
+                </div>
+
+                {/* GL Date */}
+                <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
+                  <Label className=" font-medium text-muted-foreground">GL Date</Label>
+                  <div className="col-span-2">
+                    <Input
+                      type="date"
+                      value={form.glDate}
+                      onChange={(e) => setForm({ ...form, glDate: e.target.value })}
+                   
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Code */}
+                <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
+                  <Label className=" font-medium text-muted-foreground ">Payment Code</Label>
+                  <div className="col-span-2">
+                    <ShadSelect
+                      value={form.paymentCode}
+                      onValueChange={(val) => setForm({ ...form, paymentCode: val })}
+                    >
+                      <SelectTrigger className="h-8 ">
+                        <SelectValue placeholder="Select payment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PaymentCodes.map((code) => (
+                          <SelectItem key={code.ACCOUNT_ID} value={code.ACCOUNT_ID} >
+                            {code.ACCOUNT_NAME}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </ShadSelect>
+                  </div>
+                </div>
+
+                {/* Total Amount */}
+                <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
+                  <Label className=" font-medium text-muted-foreground">Total Amount</Label>
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      value={form.totalAmount.toFixed(2)}
+                      readOnly
+                      className="h-8 text-xs bg-muted/40"
+                    />
+                  </div>
+                </div>
+
               </div>
             </div>
-            {/* all input payment field */}
-            <div className="">
-              {/* Entry Date */}
-              <div className="grid grid-cols-3 opacity-60   px-3 items-center py-2">
-                <label className="font-medium block text-sm  text-foreground">
-                  Entry Date
-                </label>
-                <input
-                  type="date"
-                  value={form.entryDate}
-                  onChange={(e) =>
-                    setForm({ ...form, entryDate: e.target.value })
-                  }
-                  className="col-span-2 w-full border  rounded py-1   bg-white "
-                />
+
+            {/* Description */}
+            <div className="opacity-60 space-y-1">
+              <Label className=" font-medium text-muted-foreground px-1">
+                Description
+              </Label>
+              <Textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+
+            {/* Add Row Section */}
+            <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_auto] opacity-60 gap-4 items-end">
+
+              {/* Account ID */}
+              <div className="grid grid-cols-3 items-center gap-2 px-3">
+                <Label className="text-sm font-medium ">Account ID</Label>
+                <div className="col-span-2">
+                  <Select
+                    options={accounts}
+                    value={accounts.find((acc) => acc.value === form.accountId) || null}
+                    onChange={(selected) =>
+                      setForm({
+                        ...form,
+                        accountId: selected ? selected.value : "",
+                        particular: selected ? selected.name : "",
+                      })
+                    }
+                    placeholder="Enter account..."
+                    isClearable
+                    isSearchable
+                    menuPortalTarget={document.body}
+                    // styles={{
+                    //   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    //   control: (base) => ({
+                    //     ...base,
+                    //     minHeight: "36px",
+                    //     height: "36px",
+                    //     fontSize: "12px",
+                    //     borderColor: "hsl(var(--border))",
+                    //     borderRadius: "calc(var(--radius) - 2px)",
+                    //     boxShadow: "none",
+                    //     "&:hover": { borderColor: "hsl(var(--ring))" },
+                    //   }),
+                    //   valueContainer: (base) => ({ ...base, padding: "0 8px" }),
+                    //   input: (base) => ({ ...base, margin: 0, padding: 0 }),
+                    //   indicatorsContainer: (base) => ({ ...base, height: "36px" }),
+                    //   menu: (base) => ({
+                    //     ...base,
+                    //     backgroundColor: "white",
+                    //     border: "1px solid hsl(var(--border))",
+                    //     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    //     fontSize: "12px",
+                    //   }),
+                    // }}
+                  />
+                </div>
               </div>
-              {/* Invoice No */}
-              <div className="grid grid-cols-3 opacity-60  px-3 items-center ">
-                <label className="font-medium block text-sm  text-foreground">
-                  Invoice No
-                </label>
-                <input
+
+              {/* Particular */}
+              <div className="grid grid-cols-3 items-center gap-2 px-3">
+                <Label className="text-sm font-medium text-muted-foreground">Particular</Label>
+                <Input
                   type="text"
-                  value={form.invoiceNo}
-                  onChange={(e) =>
-                    setForm({ ...form, invoiceNo: e.target.value })
-                  }
-                  disabled={!voucherId}
-                  className="col-span-2 w-full border   rounded py-1  bg-white "
-                />
-              </div>
-              {/* Supporting */}
-              <div className="grid grid-cols-3 opacity-60 py-2  px-3 items-center ">
-                <label className="font-medium block text-sm  text-foreground">
-                  No. of Supporting
-                </label>
-                <input
-                  type="number"
-                  value={form.supporting}
-                  onChange={(e) =>
-                    setForm({ ...form, supporting: e.target.value })
-                  }
-                  className="border-collapse w-40 border rounded py-1   bg-white "
-                />
-              </div>
-              <div className="grid grid-cols-3 opacity-60 py-2  px-3 items-center">
-                <label className="font-medium block text-sm  text-foreground">
-                  GL Date
-                </label>
-                <input
-                  type="date"
-                  value={form.glDate}
-                  onChange={(e) => setForm({ ...form, glDate: e.target.value })}
-                  className="col-span-2 w-full border rounded py-1  bg-white "
-                />
-              </div>
-              <div className="grid grid-cols-3 opacity-60   px-3 items-center ">
-                <label className="font-medium block text-sm  text-foreground">
-                  Payment Code
-                </label>
-                <select
-                  value={form.paymentCode}
-                  onChange={(e) =>
-                    setForm({ ...form, paymentCode: e.target.value })
-                  }
-                  className="col-span-2 w-full rounded py-1 border  bg-white "
-                >
-                  <option value="">Select payment</option>
-                  {PaymentCodes.map((code) => (
-                    <option key={code.ACCOUNT_ID} value={code.ACCOUNT_ID}>
-                      {code.ACCOUNT_NAME}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-3 opacity-60   px-3 items-center py-3">
-                <label className="font-medium block text-sm  text-foreground">
-                  Total Amount
-                </label>
-                <input
-                  type="number"
-                  value={form.totalAmount.toFixed(2)}
+                  value={form.particular}
                   readOnly
-                  className="col-span-2 w-full border rounded py-1  bg-white "
+                  className="col-span-2 h-8 text-xs bg-muted/40"
                 />
               </div>
+
+              {/* Amount */}
+              <div className="grid grid-cols-3 items-center gap-2 px-3">
+                <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
+                <Input
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  className="col-span-2 h-8 text-xs"
+                />
+              </div>
+
+              {/* Add Button */}
+              <div className="px-4 pb-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addRow}
+                  className="flex items-center gap-1 cursor-pointer"
+                >
+                  <span className="font-extrabold text-base leading-none">+</span>
+                  Add
+                </Button>
+              </div>
             </div>
-          </div>
 
-          <div className="mt-4 mb-4 bg-white opacity-60">
-            <label className="block text-sm font-medium text-gray-600 mb-2  py-2 px-4 rounded-lg">
-              Description
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              className="w-full mt-1 border rounded-lg px-3 py-2"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_1fr] opacity-60 gap-4 rounded-lg justify-center items-center ">
-            <div className="grid grid-cols-3  px-3 items-center  py-1">
-              <label className="font-medium block text-sm  text-foreground">
-                Account ID
-              </label>
-              <Select
-                options={accounts}
-                className="col-span-2 border w-full rounded shadow-2xl"
-                value={
-                  accounts.find((acc) => acc.value === form.accountId) || null
-                }
-                onChange={(selected) =>
-                  setForm({
-                    ...form,
-                    accountId: selected ? selected.value : "",
-                    particular: selected ? selected.name : "",
-                  })
-                }
-                placeholder="Enter account..."
-                isClearable
-                isSearchable
-                menuPortalTarget={document.body}
-                styles={{
-                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                  menu: (base) => ({
-                    ...base,
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                  }),
-                }}
-              />
-            </div>
-            <div className="grid grid-cols-3   px-3 items-center py-3">
-              <label className="font-medium block text-sm  text-foreground">
-                Particular
-              </label>
-              <input
-                type="text"
-                value={form.particular}
-                readOnly
-                className="col-span-2 border w-full rounded py-1  bg-white"
-              />
-            </div>
-            <div className="grid grid-cols-3  px-3  items-center py-3">
-              <label className="font-medium block text-sm  text-foreground">
-                Amount
-              </label>
-              <input
-                type="number"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                className="col-span-1 border w-full rounded py-1  bg-white "
-              />
-            </div>
-            <div className="px-4 py-2">
-              <button
-                type="button"
-                onClick={addRow}
-                className=" text-black cursor-pointer border px-3 py-1 rounded-lg flex items-center"
-              >
-                <span className="mr-1 font-extrabold">+</span>Add
-              </button>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full border-collapse opacity-80 rounded-lg text-xs md:text-sm">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-2 md:px-4 py-2 text-center font-medium">
-                    Account Code
-                  </th>
-                  <th className="px-2 md:px-4 py-2 text-center font-medium">
-                    Particulars
-                  </th>
-                  <th className="px-2 md:px-4 py-2 text-center font-medium">
-                    Amount
-                  </th>
-                 
-                  <th className="px-2 md:px-4 py-2 text-center font-medium w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className={`border ${row.isNew ? 'bg-green-50' : ''}`}>
-                    <td className="border px-2 md:px-4 py-2">
-                      <input
-                        type="number"
-                        value={row.accountCode}
-                        onChange={(e) =>
-                          updateRow(row.id, "accountCode", e.target.value)
-                        }
-                        className="w-full bg-transparent outline-none"
-                        placeholder="Enter accountCode..."
-                      />
-                    </td>
-
-                    <td className="border px-2 md:px-4 py-2">
-                      <input
-                        type="text"
-                        value={row.particulars}
-                        onChange={(e) =>
-                          updateRow(row.id, "particulars", e.target.value)
-                        }
-                        className="w-full bg-transparent outline-none"
-                        placeholder="Enter particulars..."
-                      />
-                    </td>
-
-                    <td className="border px-2 md:px-4 py-2 text-center">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={row.amount}
-                        onChange={(e) =>
-                          updateRow(row.id, "amount", e.target.value)
-                        }
-                        className="w-full bg-transparent outline-none"
-                        placeholder="0.00"
-                      />
-                    </td>
-
-                    
-
-                    <td className="border px-2 md:px-4 py-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => removeRow(row.id)}
-                        className="hover:bg-red-50 p-1 rounded transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {rows.length > 0 && (
-                  <tr className="font-semibold bg-gray-50">
-                    <td colSpan="2" className="p-2 text-right text-gray-600">
-                      Total
-                    </td>
-                    <td className="border p-2 text-center">
-                      {form.totalAmount.toFixed(2)}
-                    </td>
-                    <td colSpan="2"></td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-         
-
-          <div className="flex flex-col md:flex-row justify-end gap-4">
-           
-            <Button
-              type="button"
-              onClick={() => setShowModal(true)}
-              // className="bg-green-500 cursor-pointer text-white px-12 py-2 rounded-lg"
-            >
-              {mutation.isPending
-                ? "Submitting..."
-                : voucherId
-                ? "Update"
-                : "Save"}
-            </Button>
-          </div>
-        </div>
-
-        <PaymentTable></PaymentTable>
-
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0  bg-black flex justify-center items-center z-50">
-            <div className="bg-white rounded-2xl p-6 w-11/12 md:w-1/2 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">
-                Confirm Voucher Submission
-              </h2>
-
-              <div className="space-y-2">
-                <p>
-                  <strong>Entry Date:</strong> {form.entryDate}
-                </p>
-                <p>
-                  <strong>Invoice No:</strong> {form.invoiceNo}
-                </p>
-                <p>
-                  <strong>No. of Supporting:</strong> {form.supporting}
-                </p>
-                <p>
-                  <strong>Description:</strong> {form.description}
-                </p>
-                <p>
-                  <strong>Supplier:</strong>{" "}
-                  {
-                    suppliers.find((s) => s.SUPPLIER_ID === form.supplier)
-                      ?.SUPPLIER_NAME
-                  }
-                </p>
-                <p>
-                  <strong>GL Date:</strong> {form.glDate}
-                </p>
-                <p>
-                  <strong>Payment Code:</strong> {form.paymentCode}
-                </p>
-
-                <h3 className="font-semibold mt-2">Accounts:</h3>
-                <ul className="list-disc pl-5">
-                  {rows.map((row, index) => (
-                    <li key={index} className={row.isNew ? 'text-black' : ''}>
-                      {row.accountCode} - {row.particulars} - {row.amount}
-                      {row.isNew}
-                    </li>
+            {/* Rows Table */}
+            <div className="overflow-x-auto rounded-lg border">
+              <Table className="text-xs md:text-sm opacity-80">
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="text-center font-medium">Account Code</TableHead>
+                    <TableHead className="text-center font-medium">Particulars</TableHead>
+                    <TableHead className="text-center font-medium">Amount</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      className={row.isNew ? "bg-green-50 hover:bg-green-100" : ""}
+                    >
+                      <TableCell className="px-2 md:px-4 py-2">
+                        <Input
+                          type="number"
+                          value={row.accountCode}
+                          onChange={(e) => updateRow(row.id, "accountCode", e.target.value)}
+                          // className="h-7 bg-transparent border-none shadow-none focus-visible:ring-0 text-xs p-0"
+                          placeholder="Enter accountCode..."
+                        />
+                      </TableCell>
+                      <TableCell className="px-2 md:px-4 py-2">
+                        <Input
+                          type="text"
+                          value={row.particulars}
+                          onChange={(e) => updateRow(row.id, "particulars", e.target.value)}
+                          // className="h-7 bg-transparent border-none shadow-none focus-visible:ring-0 text-xs p-0"
+                          placeholder="Enter particulars..."
+                        />
+                      </TableCell>
+                      <TableCell className="px-2 md:px-4 py-2 text-center">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={row.amount}
+                          onChange={(e) => updateRow(row.id, "amount", e.target.value)}
+                          // className="h-7 bg-transparent border-none shadow-none focus-visible:ring-0 text-xs text-center p-0"
+                          placeholder="0.00"
+                        />
+                      </TableCell>
+                      <TableCell className="px-2 md:px-4 py-2 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeRow(row.id)}
+                          // className="h-7 w-7 hover:bg-red-50 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4 " />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </ul>
 
-                <p className="font-semibold mt-2">
-                  Total: {form.totalAmount.toFixed(2)}
-                </p>
-              </div>
-
-              <div className="flex justify-end mt-4 space-x-3">
-                <Button
-                  onClick={() => setShowModal(false)}
-                  // className="px-4 py-2 rounded-lg bg-gray-300"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={mutation.isPending}
-                  // className="px-4 py-2 rounded-lg bg-green-500 text-white"
-                >
-                  {mutation.isPending ? "Submitting..." : "Confirm"}
-                </Button>
-              </div>
+                  {rows.length > 0 && (
+                    <TableRow className="font-semibold bg-muted/30">
+                      <TableCell colSpan={2} className="p-2 text-right text-muted-foreground text-xs">
+                        Total
+                      </TableCell>
+                      <TableCell className="p-2 text-center text-xs border-l">
+                        {form.totalAmount.toFixed(2)}
+                      </TableCell>
+                      <TableCell colSpan={2} />
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          </div>
-        )}
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <Button type="button" onClick={() => setShowModal(true)}>
+                {mutation.isPending ? "Submitting..." : voucherId ? "Update" : "Save"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <PaymentTable />
+
+        {/* Confirm Modal */}
+        <Dialog open={showModal} onOpenChange={setShowModal}>
+          <DialogContent className="w-11/12 md:max-w-xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Confirm Voucher Submission</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-2 text-sm">
+              <p><strong>Entry Date:</strong> {form.entryDate}</p>
+              <p><strong>Invoice No:</strong> {form.invoiceNo}</p>
+              <p><strong>No. of Supporting:</strong> {form.supporting}</p>
+              <p><strong>Description:</strong> {form.description}</p>
+              <p>
+                <strong>Supplier:</strong>{" "}
+                {suppliers.find((s) => s.SUPPLIER_ID === form.supplier)?.SUPPLIER_NAME}
+              </p>
+              <p><strong>GL Date:</strong> {form.glDate}</p>
+              <p><strong>Payment Code:</strong> {form.paymentCode}</p>
+
+              <p className="font-semibold pt-1">Accounts:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                {rows.map((row, index) => (
+                  <li key={index} className={row.isNew ? "text-black" : ""}>
+                    {row.accountCode} — {row.particulars} — {row.amount}
+                    {row.isNew}
+                  </li>
+                ))}
+              </ul>
+
+              <p className="font-semibold pt-1">
+                Total: {form.totalAmount.toFixed(2)}
+              </p>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={mutation.isPending}>
+                {mutation.isPending ? "Submitting..." : "Confirm"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </SectionContainer>
   );

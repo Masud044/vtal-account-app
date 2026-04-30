@@ -186,7 +186,7 @@ export default function JournalTable() {
             {/* Edit */}
             <Link
               to={`/dashboard/journal-voucher/${voucher.ID}`}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-gray-500 hover:text-violet-700 hover:bg-violet-50 transition-colors"
+              // className="inline-flex items-center justify-center h-8 w-8 rounded-md text-gray-500 hover:text-violet-700 hover:bg-violet-50 transition-colors"
               title="Edit Voucher"
             >
               <Pencil size={16} />
@@ -196,9 +196,9 @@ export default function JournalTable() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="ghost"
+                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-gray-500 hover:text-violet-700"
+                  className="h-8 w-8  hover:text-violet-700"
                   title="Download"
                   disabled={downloading?.startsWith(`${voucher.ID}-`)}
                 >

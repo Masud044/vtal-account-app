@@ -480,7 +480,7 @@ export default function ItemStockList() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-0.5">
             <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Item Stock</h1>
-            <Breadcrumb>
+            {/* <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild><Link to="/">Dashboard</Link></BreadcrumbLink>
@@ -492,7 +492,7 @@ export default function ItemStockList() {
                   <BreadcrumbPage className="text-muted-foreground/80">Item Stock</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
-            </Breadcrumb>
+            </Breadcrumb> */}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>

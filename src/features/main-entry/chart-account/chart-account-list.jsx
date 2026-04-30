@@ -13,10 +13,9 @@ import {
   Trash2,
   AlertCircle,
   RefreshCw,
-  Package,
+  BookOpen,
 } from "lucide-react";
-import { toast } from "sonner";
-import { Link } from "react-router";
+// import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,62 +41,56 @@ import { useConfirmationDialog } from "@/hooks/useConfirmationDialog";
 import { Spinner } from "@/components/ui/spinner";
 import { IconCircleDashedPlus, IconEdit } from "@tabler/icons-react";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 
-import { useItems, useDeleteItem } from "./queries";
-import AddItemSheet from "./add-item-sheet";
-import UpdateItemSheet from "./update-item-sheet";
+import { useChartOfAccounts } from "./queries";
+import AddChartSheet from "./add-chart-account-sheet";
+import UpdateChartSheet from "./update-chart-account-sheet";
 
-export default function ItemList() {
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
+export default function ChartList() {
+  const [sorting, setSorting]               = useState([]);
+  const [columnFilters, setColumnFilters]   = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [rowSelection, setRowSelection] = useState({});
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const [rowSelection, setRowSelection]     = useState({});
+  const [globalFilter, setGlobalFilter]     = useState("");
+  const [isAddSheetOpen, setIsAddSheetOpen]       = useState(false);
   const [isUpdateSheetOpen, setIsUpdateSheetOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedAccount, setSelectedAccount]     = useState(null);
 
   const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
+
   const {
-    data: items = [],
+    data: accounts = [],
     isLoading,
     isError,
     error,
     refetch,
     isFetching,
-  } = useItems();
-  const deleteMutation = useDeleteItem();
+  } = useChartOfAccounts();
 
-  const handleEdit = (item) => {
-    setSelectedItem(item);
+//   const deleteMutation = useDeleteChartOfAccount();
+
+  const handleEdit = (account) => {
+    setSelectedAccount(account);
     setIsUpdateSheetOpen(true);
   };
 
-  const handleDelete = async (item) => {
-    const confirmed = await showConfirmation({
-      title: "Delete item?",
-      description: `Are you sure you want to delete "${item.NAME}"? This action cannot be undone.`,
-      confirmText: "Delete",
-      cancelText: "Cancel",
-      variant: "destructive",
-    });
-    if (confirmed) {
-      try {
-        await deleteMutation.mutateAsync(item.ITEM_ID);
-        toast.success("Item deleted successfully!");
-      } catch (err) {
-        toast.error(err?.message || "Failed to delete item. Please try again.");
-      }
-    }
-  };
+//   const handleDelete = async (account) => {
+//     const confirmed = await showConfirmation({
+//       title: "Delete account?",
+//       description: `Are you sure you want to delete "${account.ACCOUNT_NAME}"? This action cannot be undone.`,
+//       confirmText: "Delete",
+//       cancelText: "Cancel",
+//       variant: "destructive",
+//     });
+//     if (confirmed) {
+//       try {
+//         await deleteMutation.mutateAsync(account.ID);
+//         toast.success("Account deleted successfully!");
+//       } catch (err) {
+//         toast.error(err?.message || "Failed to delete account.");
+//       }
+//     }
+//   };
 
   const columns = [
     // Select
@@ -121,102 +114,84 @@ export default function ItemList() {
       enableHiding: false,
     },
 
-    // Item ID
-    // {
-    //   accessorKey: "ITEM_ID",
-    //   header: ({ column }) => (
-    //     <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-    //       Item ID <ArrowUpDown className="ml-2 h-4 w-4" />
-    //     </Button>
-    //   ),
-    //   cell: ({ row }) => (
-    //     <div className="font-medium text-muted-foreground">{row.getValue("ITEM_ID")}</div>
-    //   ),
-    // },
-
-    // Name + Model
+    // Account ID
     {
-      accessorKey: "NAME",
+      accessorKey: "ACCOUNT_ID",
       header: ({ column }) => (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Name <ArrowUpDown className="ml-2 h-4 w-4" />
+          Account ID <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => (
-        <div>
-          <div className="font-medium">{row.getValue("NAME") || "—"}</div>
-          {row.original.MODEL && (
-            <div className="text-xs text-muted-foreground">{row.original.MODEL}</div>
-          )}
-        </div>
+        <div className="font-mono text-sm text-muted-foreground">{row.getValue("ACCOUNT_ID")}</div>
       ),
     },
 
-    // Description
+    // Account Name
     {
-      accessorKey: "TYPE_NAME",
-      header: "Type Name",
+      accessorKey: "ACCOUNT_NAME",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Account Name <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
       cell: ({ row }) => (
-        <div className="max-w-[200px] truncate text-muted-foreground text-sm">
-          {row.getValue("TYPE_NAME") || "—"}
-        </div>
+        <div className="font-medium">{row.getValue("ACCOUNT_NAME") || "—"}</div>
       ),
     },
-     {
-      accessorKey: "MIN_LEVEL",
-      header: "Min Level",
-      cell: ({ row }) => <div>{row.getValue("MIN_LEVEL") ?? "—"}</div>,
-    },
 
-    // Brand
+    // Parent Account ID
     // {
-    //   accessorKey: "BRAND_ID",
-    //   header: "Brand",
-    //   cell: ({ row }) => (
-    //     <Badge variant="outline" className="font-mono text-xs">
-    //       {row.getValue("BRAND_ID") || "—"}
-    //     </Badge>
-    //   ),
-    // },
-
-    // Category
-    // {
-    //   accessorKey: "CATEGORY_ID",
-    //   header: "Category",
-    //   cell: ({ row }) => <div>{row.getValue("CATEGORY_ID") ?? "—"}</div>,
-    // },
-
-    // Price
-    // {
-    //   accessorKey: "PRICE",
-    //   header: "Price",
+    //   accessorKey: "PARENT_ACCOUNT_ID",
+    //   header: "Parent",
     //   cell: ({ row }) => {
-    //     const p = row.getValue("PRICE");
-    //     return <div className="font-medium">{p != null ? Number(p).toFixed(2) : "—"}</div>;
+    //     const val = row.getValue("PARENT_ACCOUNT_ID");
+    //     return (
+    //       <div className="font-mono text-xs text-muted-foreground">
+    //         {!val || val === "0" ? <span className="text-muted-foreground/50 italic">Root</span> : val}
+    //       </div>
+    //     );
     //   },
     // },
 
-    // Unit
+    // Level
     {
-      accessorKey: "UNIT",
-      header: "Unit",
-      cell: ({ row }) => <div>{row.getValue("UNIT") || "—"}</div>,
+      accessorKey: "LEBEL",
+      header: "Level",
+      cell: ({ row }) => {
+        const lvl = row.getValue("LEBEL");
+        const colors = {
+          1: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+          2: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+          3: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300",
+          4: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+        };
+        return (
+          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colors[lvl] || "bg-gray-100 text-gray-800"}`}>
+            L{lvl}
+          </span>
+        );
+      },
     },
 
-    // Min Level
+    // Last Level
     {
-      accessorKey: "MIN_LEVEL",
-      header: "Min Level",
-      cell: ({ row }) => <div>{row.getValue("MIN_LEVEL") ?? "—"}</div>,
-    },
-
-    // Status
-    {
-      accessorKey: "STATUS",
-      header: "Status",
+      accessorKey: "LASTLEVEL",
+      header: "Last Level",
       cell: ({ row }) => (
-        <Badge variant={row.getValue("STATUS") === 1 ? "success" : "secondary"}>
-          {row.getValue("STATUS") === 1 ? "Active" : "Inactive"}
+        <Badge variant={row.getValue("LASTLEVEL") === 1 ? "success" : "secondary"}>
+          {row.getValue("LASTLEVEL") === 1 ? "Yes" : "No"}
+        </Badge>
+      ),
+    },
+
+    // Enabled
+    {
+      accessorKey: "ENABLED",
+      header: "Enabled",
+      cell: ({ row }) => (
+        <Badge variant={row.getValue("ENABLED") === 1 ? "success" : "secondary"}>
+          {row.getValue("ENABLED") === 1 ? "Yes" : "No"}
         </Badge>
       ),
     },
@@ -227,25 +202,25 @@ export default function ItemList() {
       header: "Actions",
       enableHiding: false,
       cell: ({ row }) => {
-        const item = row.original;
+        const account = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(account)}>
               <IconEdit className="h-4 w-4" />
               <span className="sr-only">Edit</span>
             </Button>
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => handleDelete(item)}
+              onClick={() => handleDelete(account)}
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending
                 ? <Spinner data-icon="inline-start" />
                 : <Trash2 className="h-4 w-4" />}
               <span className="sr-only">Delete</span>
-            </Button>
+            </Button> */}
           </div>
         );
       },
@@ -253,7 +228,7 @@ export default function ItemList() {
   ];
 
   const table = useReactTable({
-    data: items,
+    data: accounts,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -267,44 +242,44 @@ export default function ItemList() {
     state: { sorting, columnFilters, columnVisibility, rowSelection, globalFilter },
   });
 
-  // Loading
+  // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div>
         <div className="bg-card rounded-sm shadow-sm p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Items</h1>
-            <Button disabled><IconCircleDashedPlus className="mr-1" />Add Item</Button>
+            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Chart of Account</h1>
+            <Button disabled><IconCircleDashedPlus className="mr-1" />Add Account</Button>
           </div>
         </div>
         <div className="bg-card rounded-lg shadow-sm p-4">
           <div className="flex flex-col items-center justify-center py-16">
             <Spinner className="h-12 w-12 mb-4" />
-            <p className="text-muted-foreground">Loading items...</p>
+            <p className="text-muted-foreground">Loading accounts...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // Error
+  // ── Error ──────────────────────────────────────────────────────────────────
   if (isError) {
     return (
       <div>
         <div className="bg-card rounded-sm shadow-sm p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Items</h1>
+            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Chart of Account</h1>
             <Button onClick={() => setIsAddSheetOpen(true)}>
-              <IconCircleDashedPlus className="mr-1" />Add Item
+              <IconCircleDashedPlus className="mr-1" />Add Account
             </Button>
           </div>
         </div>
         <div className="bg-card rounded-lg shadow-sm p-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error Loading Items</AlertTitle>
+            <AlertTitle>Error Loading Accounts</AlertTitle>
             <AlertDescription className="mt-2 flex flex-col gap-2">
-              <p>{error?.message || "Failed to load items."}</p>
+              <p>{error?.message || "Failed to load accounts."}</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="w-fit">
                 {isFetching
                   ? <><Spinner className="mr-2 h-4 w-4" />Retrying...</>
@@ -322,29 +297,14 @@ export default function ItemList() {
       {/* Header */}
       <div className="bg-card rounded-md shadow-sm p-4 mb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-0.5">
-            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Items</h1>
-            {/* <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild><Link to="/">Dashboard</Link></BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>Inventory</BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="text-muted-foreground/80">Items</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb> */}
-          </div>
+          <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Chart of Account</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
               <span className="sr-only">Refresh</span>
             </Button>
             <Button onClick={() => setIsAddSheetOpen(true)}>
-              <IconCircleDashedPlus className="mr-1" />Add Item
+              <IconCircleDashedPlus className="mr-1" />Add Account
             </Button>
           </div>
         </div>
@@ -355,7 +315,7 @@ export default function ItemList() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <Input
-              placeholder="Search by name, brand, description..."
+              placeholder="Search by name, account ID..."
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               className="max-w-sm"
@@ -410,8 +370,8 @@ export default function ItemList() {
                     <TableCell colSpan={columns.length} className="h-24 text-center">
                       <Empty>
                         <EmptyHeader>
-                          <EmptyMedia variant="icon"><Package /></EmptyMedia>
-                          <EmptyTitle>No Items Found</EmptyTitle>
+                          <EmptyMedia variant="icon"><BookOpen /></EmptyMedia>
+                          <EmptyTitle>No Accounts Found</EmptyTitle>
                         </EmptyHeader>
                       </Empty>
                     </TableCell>
@@ -427,18 +387,18 @@ export default function ItemList() {
 
       {/* Sheets */}
       {isAddSheetOpen && (
-        <AddItemSheet
+        <AddChartSheet
           open={isAddSheetOpen}
           onOpenChange={setIsAddSheetOpen}
           showConfirmation={showConfirmation}
         />
       )}
       {isUpdateSheetOpen && (
-        <UpdateItemSheet
+        <UpdateChartSheet
           open={isUpdateSheetOpen}
           onOpenChange={setIsUpdateSheetOpen}
           showConfirmation={showConfirmation}
-          item={selectedItem}
+          account={selectedAccount}
         />
       )}
       <ConfirmationDialog />
