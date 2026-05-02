@@ -14,6 +14,7 @@ import {
   Download,
   FileText,
   FileSpreadsheet,
+  BadgeCheck,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -38,6 +39,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { DataTablePagination } from "@/components/DataTablePagination";
 import { toast } from "react-toastify";
@@ -50,10 +57,10 @@ export default function JournalTable() {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
-  const [downloading, setDownloading] = useState(null); // e.g. "42-pdf"
+  const [downloading, setDownloading] = useState(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["unpostedVouchers"],
+    queryKey: ["unpostedJournalVouchers"],
     queryFn: async () => {
       const res = await axios.get(`${BASE_URL}/api/gl-all-unposted`);
       return res.data;
@@ -65,7 +72,6 @@ export default function JournalTable() {
     return [...vouchers].sort((a, b) => Number(b.ID) - Number(a.ID));
   }, [data]);
 
-  // ── Download handler ───────────────────────────────────────────────────────
   const handleDownload = async (voucher, type) => {
     const key = `${voucher.ID}-${type}`;
     setDownloading(key);
@@ -110,7 +116,7 @@ export default function JournalTable() {
     {
       accessorKey: "VOUCHERNO",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Voucher No <ArrowUpDown />
         </Button>
       ),
@@ -119,7 +125,7 @@ export default function JournalTable() {
     {
       accessorKey: "TRANS_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Transaction Date <ArrowUpDown />
         </Button>
       ),
@@ -128,7 +134,7 @@ export default function JournalTable() {
     {
       accessorKey: "GL_ENTRY_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           GL Date <ArrowUpDown />
         </Button>
       ),
@@ -136,7 +142,9 @@ export default function JournalTable() {
     },
     {
       accessorKey: "DESCRIPTION",
-      header: "Description",
+      header: () => (
+        <div className="text-left font-semibold text-gray-700">Description</div>
+      ),
       cell: ({ row }) => (
         <div className="max-w-[200px] truncate" title={row.getValue("DESCRIPTION")}>
           {row.getValue("DESCRIPTION")}
@@ -146,12 +154,12 @@ export default function JournalTable() {
     {
       accessorKey: "DEBIT",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Debit <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => {
-        const amount    = parseFloat(row.getValue("DEBIT") || 0);
+        const amount = parseFloat(row.getValue("DEBIT") || 0);
         const formatted = new Intl.NumberFormat("en-US", {
           minimumFractionDigits: 2, maximumFractionDigits: 2,
         }).format(amount);
@@ -161,12 +169,12 @@ export default function JournalTable() {
     {
       accessorKey: "CREDIT",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Credit <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => {
-        const amount    = parseFloat(row.getValue("CREDIT") || 0);
+        const amount = parseFloat(row.getValue("CREDIT") || 0);
         const formatted = new Intl.NumberFormat("en-US", {
           minimumFractionDigits: 2, maximumFractionDigits: 2,
         }).format(amount);
@@ -176,42 +184,45 @@ export default function JournalTable() {
     {
       id: "actions",
       enableHiding: false,
-      header: () => <div className="text-center">Actions</div>,
+      header: () => <div className="text-center font-semibold font-sans text-gray-700 text-sm">Actions</div>,
       cell: ({ row }) => {
         const voucher = row.original;
+        const isApproved = voucher.POSTED === 1 || voucher.POSTED === "1";
 
         return (
           <div className="flex items-center justify-center gap-1">
 
-            {/* Edit */}
-            <Link
-              to={`/dashboard/journal-voucher/${voucher.ID}`}
-              // className="inline-flex items-center justify-center h-8 w-8 rounded-md text-gray-500 hover:text-violet-700 hover:bg-violet-50 transition-colors"
-              title="Edit Voucher"
-            >
-              <Pencil size={16} />
-            </Link>
+            {/* Edit — approved হলে disabled */}
+            {isApproved ? (
+              <Button variant="ghost" size="icon" disabled className="opacity-30 cursor-not-allowed">
+                <Pencil size={16} />
+              </Button>
+            ) : (
+              <Link to={`/dashboard/journal-voucher/${voucher.ID}`} title="Edit Voucher">
+                <Button variant="ghost" size="icon">
+                  <Pencil size={16} />
+                </Button>
+              </Link>
+            )}
 
-            {/* Download dropdown */}
+            {/* Download — সবসময় active */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                   variant="ghost"
+                  variant="ghost"
                   size="icon"
-                  className="h-8 w-8  hover:text-violet-700"
+                  className="h-8 w-8 hover:text-violet-700"
                   title="Download"
                   disabled={downloading?.startsWith(`${voucher.ID}-`)}
                 >
                   <Download size={16} />
                 </Button>
               </DropdownMenuTrigger>
-
               <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   Download as
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-pdf`}
@@ -220,7 +231,6 @@ export default function JournalTable() {
                   <FileText size={14} className="text-red-500" />
                   {downloading === `${voucher.ID}-pdf` ? "Generating…" : "PDF"}
                 </DropdownMenuItem>
-
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-excel`}
@@ -231,6 +241,22 @@ export default function JournalTable() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Approved tooltip icon — approved হলে দেখাবে */}
+            {isApproved && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-green-600 bg-green-100 border border-green-200 cursor-default">
+                      <BadgeCheck size={16} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-green-700 text-white text-xs">
+                    Approved
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
 
           </div>
         );

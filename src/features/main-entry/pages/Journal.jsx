@@ -347,8 +347,8 @@ const Journal = () => {
           {/* all input payment field */}
           <div className="">
             {/* Entry Date */}
-            <div className="grid grid-cols-3 opacity-60   px-3 items-center py-2">
-              <label className="font-medium block text-sm  text-foreground">
+            <div className="grid grid-cols-3 font-sans   px-3 items-center py-2">
+              <label className="font-semibold text-gray-700 font-sans block text-sm  ">
                 Entry Date
               </label>
               <input
@@ -362,8 +362,8 @@ const Journal = () => {
             </div>
            
             {/* Supporting */}
-            <div className="grid grid-cols-3 opacity-60 py-2  px-3 items-center ">
-              <label className="font-medium block text-sm  text-foreground">
+            <div className="grid grid-cols-3 font-sans py-2  px-3 items-center ">
+              <label className="font-semibold text-gray-700 block text-sm  ">
                 No. of Supporting
               </label>
               <input
@@ -375,8 +375,8 @@ const Journal = () => {
                 className="col-span-2 w-40 border rounded py-1   bg-white "
               />
             </div>
-            <div className="grid grid-cols-3 opacity-60 py-2  px-3 items-center">
-              <label className="font-medium block text-sm  text-foreground">
+            <div className="grid grid-cols-3 font-sans  py-2  px-3 items-center">
+              <label className="font-semibold text-gray-700 font-sans  block text-sm ">
                 GL Date
               </label>
               <input
@@ -390,8 +390,8 @@ const Journal = () => {
           </div>
         </div>
 
-        <div className="mt-4 mb-4 bg-white opacity-60">
-          <label className="block text-sm font-medium text-gray-600 mb-2  py-2 px-4 rounded-lg">
+        <div className="mt-4 mb-4 bg-white font-sans">
+          <label className="block text-sm font-semibold  text-gray-700  mb-2  py-2 px-4 rounded-lg">
             Description
           </label>
           <textarea
@@ -400,9 +400,9 @@ const Journal = () => {
             className="w-full mt-1 border rounded-lg px-3 py-2"
           />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_1fr] opacity-60 gap-4 rounded-lg justify-center items-center ">
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_1fr]  gap-4 rounded-lg justify-center items-center ">
           <div className="grid grid-cols-3  px-3 items-center  py-1">
-            <label className="font-medium block text-sm  text-foreground">
+            <label className="font-semibold font-sans text-gray-700 block text-sm  ">
               Account ID
             </label>
             <Select
@@ -433,8 +433,8 @@ const Journal = () => {
               }}
             />
           </div>
-          <div className="grid grid-cols-3   px-3 items-center py-3">
-            <label className="font-medium block text-sm  text-foreground">
+          <div className="grid grid-cols-3    px-3 items-center py-3">
+            <label className="font-semibold font-sans text-gray-700 block text-sm  ">
               Particular
             </label>
             <input
@@ -449,26 +449,26 @@ const Journal = () => {
             <button
               type="button"
               onClick={addRow}
-              className=" text-black cursor-pointer border px-3 py-1 rounded-lg flex items-center"
+              className="  font-semibold font-sans text-gray-700 cursor-pointer border px-3 py-1 rounded-lg flex items-center text-sm"
             >
-              <span className="mr-1 font-extrabold">+</span>Add
+              <span className="mr-1 font-extrabold ">+</span>Add
             </button>
           </div>
         </div>
 
-        <table className="w-full table-fixed border-collapse opacity-60 rounded-lg overflow-x-auto">
+        <table className="w-full table-fixed border-collapse  rounded-lg overflow-x-auto">
           <thead>
             <tr>
-              <th className="px-4 py-2 w-[20%] text-center font-medium text-sm text-foreground">
+              <th className="px-4 py-2 w-[20%] text-center font-semibold font-sans text-gray-700  text-sm ">
                 Account Code
               </th>
-              <th className="px-4 py-2 w-[35%] text-center font-medium text-sm text-foreground">
+              <th className="px-4 py-2 w-[35%] text-center font-semibold font-sans text-gray-700  text-sm ">
                 Particulars
               </th>
-              <th className="px-4 py-2 w-[10%] text-center font-medium text-sm text-foreground">
+              <th className="px-4 py-2 w-[10%] text-center font-semibold font-sans text-gray-700  text-sm ">
                 Debit
               </th>
-              <th className="px-4 py-2 w-[10%]  text-center font-medium text-sm text-foreground">
+              <th className="px-4 py-2 w-[10%]  text-center font-semibold font-sans text-gray-700  text-sm ">
                 credit
               </th>
             </tr>
@@ -481,7 +481,7 @@ const Journal = () => {
                 <td className="border p-2">
                   {row.credit > 0 ? (
                     // 🔒 যদি disable হয় → শুধু value দেখাবে
-                    <span className="block w-full text-center text-gray-600">
+                    <span className="block w-full text-center text-gray-700">
                       {row.debit || 0}
                     </span>
                   ) : (
@@ -499,7 +499,7 @@ const Journal = () => {
 
                 <td className="border p-2">
                   {row.debit > 0 ? (
-                    <span className="block w-full text-center text-gray-600">
+                    <span className="block w-full text-center text-gray-700">
                       {row.credit || 0}
                     </span>
                   ) : (

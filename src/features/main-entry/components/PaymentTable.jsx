@@ -15,6 +15,7 @@ import {
   Download,
   FileText,
   FileSpreadsheet,
+  BadgeCheck,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -39,13 +40,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { DataTablePagination } from "@/components/DataTablePagination";
 import { PaymentService } from "@/api/AccontingApi";
 import { toast } from "react-toastify";
 import axios from "axios";
 
-// ── Use a clearly distinct name so it never clashes with URL.createObjectURL ──
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function PaymentTable() {
@@ -54,8 +60,7 @@ export default function PaymentTable() {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null, voucherNo: "" });
-  // Track which voucher+type is currently downloading to show a loading state
-  const [downloading, setDownloading] = useState(null); // e.g. "42-pdf"
+  const [downloading, setDownloading] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -100,7 +105,6 @@ export default function PaymentTable() {
     return [...vouchers].sort((a, b) => Number(b.ID) - Number(a.ID));
   }, [data]);
 
-  // ── Download handler (fixed) ───────────────────────────────────────────────
   const handleDownload = async (voucher, type) => {
     const key = `${voucher.ID}-${type}`;
     setDownloading(key);
@@ -111,37 +115,31 @@ export default function PaymentTable() {
       );
 
       if (!response.ok) {
-        // Try to parse error body from backend
         let errMsg = `Server error ${response.status}`;
         try {
           const errBody = await response.json();
           errMsg = errBody.detail || errBody.message || errMsg;
         } catch {
-          // ignore parse failure
+          // ignore
         }
         toast.error(`Download failed: ${errMsg}`);
         return;
       }
 
       const blob = await response.blob();
-
-      // ── Use a different variable name — NOT "url" ──
       const objectUrl = URL.createObjectURL(blob);
-      const anchor    = document.createElement("a");
-      const ext       = type === "pdf" ? "pdf" : "xlsx";
+      const anchor = document.createElement("a");
+      const ext = type === "pdf" ? "pdf" : "xlsx";
 
-      anchor.href     = objectUrl;
+      anchor.href = objectUrl;
       anchor.download = `payment_voucher_${voucher.VOUCHERNO}.${ext}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
 
-      // Revoke after a short delay so the browser has time to start the download
       setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-
       toast.success(`${type.toUpperCase()} downloaded successfully!`);
     } catch (err) {
-      // Now we actually log and display the real error
       console.error(`[handleDownload] ${type} error:`, err);
       toast.error(`Error downloading ${type.toUpperCase()}: ${err.message}`);
     } finally {
@@ -194,7 +192,7 @@ export default function PaymentTable() {
         </Button>
       ),
       cell: ({ row }) => {
-        const amount    = parseFloat(row.getValue("CREDIT") || 0);
+        const amount = parseFloat(row.getValue("CREDIT") || 0);
         const formatted = new Intl.NumberFormat("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -208,39 +206,41 @@ export default function PaymentTable() {
       header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
         const voucher = row.original;
+        const isApproved = voucher.POSTED === 1 || voucher.POSTED === "1";
 
         return (
           <div className="flex items-center justify-center gap-1">
 
-            {/* Edit */}
-            <Link
-              to={`/dashboard/payment-voucher/${voucher.ID}`}
-              // className="inline-flex items-center justify-center h-8 w-8 rounded-md text-gray-500 hover:text-violet-700 hover:bg-violet-50 transition-colors"
-              title="Edit Voucher"
-            >
-              <Pencil size={16} />
-            </Link>
+            {/* Edit — approved হলে disabled */}
+            {isApproved ? (
+              <Button variant="ghost" size="icon" disabled className="opacity-30 cursor-not-allowed">
+                <Pencil size={16} />
+              </Button>
+            ) : (
+              <Link to={`/dashboard/payment-voucher/${voucher.ID}`} title="Edit Voucher">
+                <Button variant="ghost" size="icon">
+                  <Pencil size={16} />
+                </Button>
+              </Link>
+            )}
 
-            {/* Download dropdown */}
+            {/* Download — সবসময় active */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  // className="h-8 w-8 text-gray-500 hover:text-violet-700"
                   title="Download"
                   disabled={downloading?.startsWith(`${voucher.ID}-`)}
                 >
                   <Download size={16} />
                 </Button>
               </DropdownMenuTrigger>
-
               <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   Download as
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-pdf`}
@@ -249,7 +249,6 @@ export default function PaymentTable() {
                   <FileText size={14} className="text-red-500" />
                   {downloading === `${voucher.ID}-pdf` ? "Generating…" : "PDF"}
                 </DropdownMenuItem>
-
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-excel`}
@@ -261,16 +260,30 @@ export default function PaymentTable() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Delete */}
-            <Button
-              // variant="ghost"
-              size="icon"
-              // className="h-8 w-8 text-gray-500 hover:text-red-600"
-              onClick={() => handleDeleteClick(voucher)}
-              title="Delete Voucher"
-            >
-              <Trash2 size={16} />
-            </Button>
+            {/* Approved tooltip icon OR Delete */}
+            {isApproved ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-green-600 bg-green-100 border border-green-200 cursor-default">
+                      <BadgeCheck size={16} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-green-700 text-white text-xs">
+                    Approved
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDeleteClick(voucher)}
+                title="Delete Voucher"
+              >
+                <Trash2 size={16} />
+              </Button>
+            )}
 
           </div>
         );
@@ -382,7 +395,7 @@ export default function PaymentTable() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={columns.length} className="h-24 text-center">
-                        <p className="text-muted-foreground">No unposted payment vouchers found</p>
+                        <p className="text-muted-foreground">No payment vouchers found</p>
                       </TableCell>
                     </TableRow>
                   )}

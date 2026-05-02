@@ -9,6 +9,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -18,6 +25,7 @@ import {
   ChevronDown,
   FileUser,
   CheckCircle,
+  BadgeCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -51,34 +59,25 @@ import axios from "axios";
 
 const getVoucherTypeLabel = (type) => {
   switch (String(type)) {
-    case "1":
-      return "Receive";
-    case "2":
-      return "Payment";
-    case "3":
-      return "Journal";
-    case "4":
-      return "Bank Transfer";
-    default:
-      return "Unknown";
+    case "1": return "Receive";
+    case "2": return "Payment";
+    case "3": return "Journal";
+    case "4": return "Bank Transfer";
+    default: return "Unknown";
   }
 };
 
 const getEditRoute = (type, id) => {
   switch (String(type)) {
-    case "1":
-      return `/dashboard/receive-edit/${id}`;
-    case "2":
-      return `/dashboard/payment-voucher/${id}`;
-    case "3":
-      return `/dashboard/journal-voucher/${id}`;
-    default:
-      return `/dashboard/cash-voucher/${id}`;
+    case "1": return `/dashboard/receive-edit/${id}`;
+    case "2": return `/dashboard/payment-voucher/${id}`;
+    case "3": return `/dashboard/journal-voucher/${id}`;
+    default: return `/dashboard/cash-voucher/${id}`;
   }
 };
 
-// ⭐ setConfirmId পাস করা হচ্ছে — direct approve না করে dialog খুলবে
-const createColumns = (setConfirmId) => [
+// approvedIds: locally tracked approved IDs Set
+const createColumns = (setConfirmId, approvedIds) => [
   {
     id: "select",
     header: ({ table }) => (
@@ -104,10 +103,7 @@ const createColumns = (setConfirmId) => [
   {
     accessorKey: "VOUCHER_TYPE",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Voucher Type <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -120,9 +116,7 @@ const createColumns = (setConfirmId) => [
         4: "text-purple-800 bg-purple-100",
       };
       return (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${colorMap[type] || "text-gray-800 bg-gray-100"}`}
-        >
+        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${colorMap[type] || "text-gray-800 bg-gray-100"}`}>
           {getVoucherTypeLabel(type)}
         </span>
       );
@@ -131,10 +125,7 @@ const createColumns = (setConfirmId) => [
   {
     accessorKey: "VOUCHERNO",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Voucher No <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -143,10 +134,7 @@ const createColumns = (setConfirmId) => [
   {
     accessorKey: "TRANS_DATE",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Transaction Date <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -155,24 +143,16 @@ const createColumns = (setConfirmId) => [
   {
     accessorKey: "DESCRIPTION",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Description <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => (
-      <div className="ml-3">{row.getValue("DESCRIPTION")}</div>
-    ),
+    cell: ({ row }) => <div className="ml-3">{row.getValue("DESCRIPTION")}</div>,
   },
   {
     accessorKey: "ENTRY_BY",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Entry By <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -186,20 +166,52 @@ const createColumns = (setConfirmId) => [
       const item = row.original;
       const editRoute = getEditRoute(item.VOUCHER_TYPE, item.ID);
 
+      // Check approved: either from API field (IS_POSTED/STATUS) or locally tracked
+      const isApproved =
+        item.POSTED === 1 ||
+        item.POSTED === "1" ||
+        approvedIds.has(item.ID);
+
+      if (isApproved) {
+  return (
+    <div className="flex items-center justify-center gap-3">
+      {/* Edit — disabled */}
+      <Button variant="ghost" size="icon" disabled className="opacity-30 cursor-not-allowed">
+        <Pencil size={16} />
+      </Button>
+
+      {/* Approved badge with Tooltip */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-green-600 bg-green-100 border border-green-200 cursor-default">
+              <BadgeCheck size={16} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="bg-green-700 text-white text-xs">
+            Approved
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* Delete — disabled */}
+      <Button variant="ghost" size="icon" disabled className="opacity-30 cursor-not-allowed">
+        <Trash2 size={18} />
+      </Button>
+    </div>
+  );
+}
+
       return (
         <div className="flex items-center justify-center gap-3">
           {/* Edit */}
           <Link to={editRoute}>
-            <Button
-               variant="ghost"
-              size="icon"
-              // className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-            >
+            <Button variant="ghost" size="icon">
               <Pencil size={16} />
             </Button>
           </Link>
 
-          {/* ✅ Approve — dialog খুলবে, direct post হবে না */}
+          {/* Approve — dialog খুলবে */}
           <Button
             variant="ghost"
             size="icon"
@@ -229,10 +241,11 @@ const url = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 export function DashboardHomeTable() {
   const queryClient = useQueryClient();
 
-  // ✅ Confirm Dialog এর জন্য — কোন ID approve হবে সেটা track করে
   const [confirmId, setConfirmId] = React.useState(null);
-  // ✅ Loading state — approve button এ spinner দেখাবে
   const [isApproving, setIsApproving] = React.useState(false);
+
+  // ✅ Locally approved IDs track করার জন্য — API refetch ছাড়াই UI instantly update হবে
+  const [approvedIds, setApprovedIds] = React.useState(new Set());
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["unpostedVouchers"],
@@ -249,14 +262,17 @@ export function DashboardHomeTable() {
   const [columnVisibility, setColumnVisibility] = React.useState({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  // ✅ Approve Handler — backend এ posted=1 করবে
+  // ✅ Approve Handler
   const handleActivateVoucher = async () => {
     if (!confirmId) return;
     setIsApproving(true);
     try {
       const res = await axios.get(`${url}/api/active-voucher?id=${confirmId}`);
       if (res.data.success) {
-        queryClient.invalidateQueries(["unpostedVouchers"]); // table refresh
+        // ✅ Locally mark as approved — row থাকবে, approved badge দেখাবে
+        setApprovedIds((prev) => new Set([...prev, confirmId]));
+        // Optional: background-এ query invalidate করো (silent refresh)
+        queryClient.invalidateQueries(["unpostedVouchers"]);
       } else {
         alert(res.data.message || "Failed to approve voucher");
       }
@@ -264,11 +280,14 @@ export function DashboardHomeTable() {
       alert("Something went wrong: " + error.message);
     } finally {
       setIsApproving(false);
-      setConfirmId(null); // dialog বন্ধ করো
+      setConfirmId(null);
     }
   };
 
-  const columns = React.useMemo(() => createColumns(setConfirmId), []);
+  const columns = React.useMemo(
+    () => createColumns(setConfirmId, approvedIds),
+    [approvedIds] // approvedIds বদলালে columns re-render হবে
+  );
 
   const table = useReactTable({
     data: apiData,
@@ -286,7 +305,7 @@ export function DashboardHomeTable() {
 
   return (
     <div className="rounded-lg bg-white">
-      {/* ✅ Approve Confirmation Dialog */}
+      {/* Approve Confirmation Dialog */}
       <AlertDialog
         open={!!confirmId}
         onOpenChange={() => !isApproving && setConfirmId(null)}
@@ -298,11 +317,8 @@ export function DashboardHomeTable() {
               Approve Voucher?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Voucher ID <strong>{confirmId}</strong> will be permanently
-              approved.{" "}
-              <span className="text-red-500 font-medium">
-                This action cannot be undone.
-              </span>{" "}
+              Voucher ID <strong>{confirmId}</strong> will be permanently approved.{" "}
+              <span className="text-red-500 font-medium">This action cannot be undone.</span>{" "}
               Please confirm before proceeding.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -363,10 +379,7 @@ export function DashboardHomeTable() {
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -375,26 +388,19 @@ export function DashboardHomeTable() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center h-24"
-                >
+                <TableCell colSpan={columns.length} className="text-center h-24">
                   Loading...
                 </TableCell>
               </TableRow>
             )}
             {error && (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center h-24 text-red-600"
-                >
+                <TableCell colSpan={columns.length} className="text-center h-24 text-red-600">
                   Error: {error.message}
                 </TableCell>
               </TableRow>
             )}
-            {!isLoading &&
-              !error &&
+            {!isLoading && !error &&
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -403,20 +409,14 @@ export function DashboardHomeTable() {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))}
             {!isLoading && !error && table.getRowModel().rows.length === 0 && (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center h-24"
-                >
+                <TableCell colSpan={columns.length} className="text-center h-24">
                   No results.
                 </TableCell>
               </TableRow>
