@@ -264,7 +264,7 @@ const Journal = () => {
   setMessage("");
   const isNew = !voucherId;
 
-  if (!form.entryDate || !form.glDate || !form.description || rows.length === 0) {
+  if (!form.entryDate || !form.glDate  || rows.length === 0) {
     toast.error("Please fill all required fields and add at least one row.");
     return;
   }
@@ -347,8 +347,8 @@ const Journal = () => {
           {/* all input payment field */}
           <div className="">
             {/* Entry Date */}
-            <div className="grid grid-cols-3 font-sans   px-3 items-center py-2">
-              <label className="font-semibold text-gray-700 font-sans block text-sm  ">
+            <div className="grid grid-cols-3    px-3 items-center py-2">
+              <label className="font-bold text-gray-800 text-sm font-sans   ">
                 Entry Date
               </label>
               <input
@@ -362,8 +362,8 @@ const Journal = () => {
             </div>
            
             {/* Supporting */}
-            <div className="grid grid-cols-3 font-sans py-2  px-3 items-center ">
-              <label className="font-semibold text-gray-700 block text-sm  ">
+            <div className="grid grid-cols-3  py-2  px-3 items-center ">
+              <label className="font-bold text-gray-800 text-sm font-sans  ">
                 No. of Supporting
               </label>
               <input
@@ -375,8 +375,8 @@ const Journal = () => {
                 className="col-span-2 w-40 border rounded py-1   bg-white "
               />
             </div>
-            <div className="grid grid-cols-3 font-sans  py-2  px-3 items-center">
-              <label className="font-semibold text-gray-700 font-sans  block text-sm ">
+            <div className="grid grid-cols-3   py-2  px-3 items-center">
+              <label className="font-bold text-gray-800 text-sm font-sans">
                 GL Date
               </label>
               <input
@@ -390,8 +390,8 @@ const Journal = () => {
           </div>
         </div>
 
-        <div className="mt-4 mb-4 bg-white font-sans">
-          <label className="block text-sm font-semibold  text-gray-700  mb-2  py-2 px-4 rounded-lg">
+        <div className="mt-4 mb-4 bg-white ">
+          <label className="block font-bold text-gray-800 text-sm font-sans  mb-2  py-2 px-4 rounded-lg">
             Description
           </label>
           <textarea
@@ -402,7 +402,7 @@ const Journal = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_1fr]  gap-4 rounded-lg justify-center items-center ">
           <div className="grid grid-cols-3  px-3 items-center  py-1">
-            <label className="font-semibold font-sans text-gray-700 block text-sm  ">
+            <label className="font-bold text-gray-800 text-sm font-sans block   ">
               Account ID
             </label>
             <Select
@@ -434,7 +434,7 @@ const Journal = () => {
             />
           </div>
           <div className="grid grid-cols-3    px-3 items-center py-3">
-            <label className="font-semibold font-sans text-gray-700 block text-sm  ">
+            <label className="font-bold text-gray-800 text-sm font-sans block  ">
               Particular
             </label>
             <input
@@ -449,7 +449,7 @@ const Journal = () => {
             <button
               type="button"
               onClick={addRow}
-              className="  font-semibold font-sans text-gray-700 cursor-pointer border px-3 py-1 rounded-lg flex items-center text-sm"
+              className="  font-bold text-gray-800  font-sans  cursor-pointer border px-3 py-1 rounded-lg flex items-center text-sm"
             >
               <span className="mr-1 font-extrabold ">+</span>Add
             </button>
@@ -459,16 +459,16 @@ const Journal = () => {
         <table className="w-full table-fixed border-collapse  rounded-lg overflow-x-auto">
           <thead>
             <tr>
-              <th className="px-4 py-2 w-[20%] text-center font-semibold font-sans text-gray-700  text-sm ">
+              <th className="px-4 py-2 w-[20%] text-center font-bold text-gray-800 text-sm font-sans ">
                 Account Code
               </th>
-              <th className="px-4 py-2 w-[35%] text-center font-semibold font-sans text-gray-700  text-sm ">
+              <th className="px-4 py-2 w-[35%] text-center font-bold text-gray-800 text-sm font-sans ">
                 Particulars
               </th>
-              <th className="px-4 py-2 w-[10%] text-center font-semibold font-sans text-gray-700  text-sm ">
+              <th className="px-4 py-2 w-[10%] text-center font-bold text-gray-800 text-sm font-sans">
                 Debit
               </th>
-              <th className="px-4 py-2 w-[10%]  text-center font-semibold font-sans text-gray-700  text-sm ">
+              <th className="px-4 py-2 w-[10%]  text-center font-bold text-gray-800 text-sm font-sans ">
                 credit
               </th>
             </tr>

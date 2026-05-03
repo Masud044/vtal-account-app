@@ -103,7 +103,7 @@ const createColumns = (setConfirmId, approvedIds) => [
   {
     accessorKey: "VOUCHER_TYPE",
     header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <Button variant="ghost" className="font-bold text-sm text-gray-800 font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Voucher Type <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -125,7 +125,7 @@ const createColumns = (setConfirmId, approvedIds) => [
   {
     accessorKey: "VOUCHERNO",
     header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <Button variant="ghost" className="font-bold text-sm text-gray-800 font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Voucher No <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -134,7 +134,7 @@ const createColumns = (setConfirmId, approvedIds) => [
   {
     accessorKey: "TRANS_DATE",
     header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <Button variant="ghost" className="font-bold text-sm text-gray-800 font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Transaction Date <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -143,7 +143,7 @@ const createColumns = (setConfirmId, approvedIds) => [
   {
     accessorKey: "DESCRIPTION",
     header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <Button variant="ghost" className="font-bold text-sm text-gray-800 font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Description <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -152,7 +152,7 @@ const createColumns = (setConfirmId, approvedIds) => [
   {
     accessorKey: "ENTRY_BY",
     header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <Button variant="ghost" className="font-bold text-sm text-gray-800 font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Entry By <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
@@ -161,7 +161,7 @@ const createColumns = (setConfirmId, approvedIds) => [
   {
     id: "actions",
     enableHiding: false,
-    header: () => <div className="text-center">Actions</div>,
+    header: () => <div className="text-center font-bold text-sm text-gray-800 font-sans">Actions</div>,
     cell: ({ row }) => {
       const item = row.original;
       const editRoute = getEditRoute(item.VOUCHER_TYPE, item.ID);

@@ -97,8 +97,8 @@ const CashTransfer = () => {
       !form.amount ||
       !form.toCode ||
       !form.fromCode ||
-      !form.glDate ||
-      !form.description
+      !form.glDate 
+     
     ) {
       toast.error("Please fill all required fields.");
       return;

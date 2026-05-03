@@ -15,16 +15,36 @@ export default function LoginFormV2() {
   const { login, loginError, loginPending } = useAuthV2();
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const username = e.target.username.value.trim();
-    const password = e.target.password.value.trim();
-    try {
-      await login({ username, password });
-      navigate("/dashboard");
-    // eslint-disable-next-line no-empty, no-unused-vars
-    } catch (_) {}
-  };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const username = e.target.username.value.trim();
+  //   const password = e.target.password.value.trim();
+  //   try {
+  //     await login({ username, password });
+  //     navigate("/dashboard");
+  //   // eslint-disable-next-line no-empty, no-unused-vars
+  //   } catch (_) {}
+  // };
+
+  // Login.jsx — handleSubmit বদলাও
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const username = e.target.username.value.trim();
+  const password = e.target.password.value.trim();
+  try {
+    const result = await login({ username, password });
+    const roles = result?.data?.user?.roles || [];
+
+    if (roles.includes("Admin")) {
+      navigate("/dashboard");        // Admin → dashboard
+    } else if (roles.includes("Inventory")) {
+      navigate("/dashboard/welcome");          // Inventory → welcome page
+    } else {
+      navigate("/unauthorized");      // fallback
+    }
+  } catch (_) {}
+};
 
   return (
     <div className="max-w-sm mx-auto">

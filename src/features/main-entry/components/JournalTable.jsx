@@ -116,7 +116,7 @@ export default function JournalTable() {
     {
       accessorKey: "VOUCHERNO",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Voucher No <ArrowUpDown />
         </Button>
       ),
@@ -125,7 +125,7 @@ export default function JournalTable() {
     {
       accessorKey: "TRANS_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Transaction Date <ArrowUpDown />
         </Button>
       ),
@@ -134,7 +134,7 @@ export default function JournalTable() {
     {
       accessorKey: "GL_ENTRY_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           GL Date <ArrowUpDown />
         </Button>
       ),
@@ -143,7 +143,7 @@ export default function JournalTable() {
     {
       accessorKey: "DESCRIPTION",
       header: () => (
-        <div className="text-left font-semibold text-gray-700">Description</div>
+        <div className="text-left font-bold text-gray-800 text-sm font-sans">Description</div>
       ),
       cell: ({ row }) => (
         <div className="max-w-[200px] truncate" title={row.getValue("DESCRIPTION")}>
@@ -154,7 +154,7 @@ export default function JournalTable() {
     {
       accessorKey: "DEBIT",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Debit <ArrowUpDown />
         </Button>
       ),
@@ -169,7 +169,7 @@ export default function JournalTable() {
     {
       accessorKey: "CREDIT",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-semibold font-sans text-gray-700 text-sm" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Credit <ArrowUpDown />
         </Button>
       ),
@@ -184,7 +184,7 @@ export default function JournalTable() {
     {
       id: "actions",
       enableHiding: false,
-      header: () => <div className="text-center font-semibold font-sans text-gray-700 text-sm">Actions</div>,
+      header: () => <div className="text-center font-bold text-gray-800 text-sm font-sans">Actions</div>,
       cell: ({ row }) => {
         const voucher = row.original;
         const isApproved = voucher.POSTED === 1 || voucher.POSTED === "1";

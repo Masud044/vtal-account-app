@@ -277,7 +277,7 @@ const Payment = () => {
 
     if (
       isNew &&
-      (!form.entryDate || !form.glDate || !form.description ||
+      (!form.entryDate || !form.glDate  ||
         !form.paymentCode || !form.supplier || rows.length === 0)
     ) {
       toast.error("Please fill all required fields and add at least one row.");
@@ -357,7 +357,7 @@ const Payment = () => {
               {/* Supplier */}
               <div >
                 <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
-                  <Label className=" font-medium text-muted-foreground">Supplier</Label>
+                  <Label className="  font-bold text-gray-800 text-sm font-sans">Supplier</Label>
                   <div className="col-span-2">
                     <ShadSelect
                       value={form.supplier}
@@ -383,7 +383,7 @@ const Payment = () => {
 
                 {/* Entry Date */}
                 <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
-                  <Label className=" font-medium text-muted-foreground">Entry Date</Label>
+                  <Label className="font-bold text-gray-800 text-sm font-sans">Entry Date</Label>
                   <div className="col-span-2">
                     <Input
                       type="date"
@@ -396,7 +396,7 @@ const Payment = () => {
 
                 {/* Invoice No */}
                 <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
-                  <Label className=" font-medium text-muted-foreground">Invoice No</Label>
+                  <Label className="font-bold text-gray-800 text-sm font-sans">Invoice No</Label>
                   <div className="col-span-2">
                     <Input
                       type="text"
@@ -410,7 +410,7 @@ const Payment = () => {
 
                 {/* No. of Supporting */}
                 <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
-                  <Label className=" font-medium text-muted-foreground">No. of Supporting</Label>
+                  <Label className="font-bold text-gray-800 text-sm font-sans">No. of Supporting</Label>
                   <div className="col-span-2">
                     <Input
                       type="number"
@@ -423,7 +423,7 @@ const Payment = () => {
 
                 {/* GL Date */}
                 <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
-                  <Label className=" font-medium text-muted-foreground">GL Date</Label>
+                  <Label className="font-bold text-gray-800 text-sm font-sans">GL Date</Label>
                   <div className="col-span-2">
                     <Input
                       type="date"
@@ -436,7 +436,7 @@ const Payment = () => {
 
                 {/* Payment Code */}
                 <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
-                  <Label className=" font-medium text-muted-foreground ">Payment Code</Label>
+                  <Label className="font-bold text-gray-800 text-sm font-sans">Payment Code</Label>
                   <div className="col-span-2">
                     <ShadSelect
                       value={form.paymentCode}
@@ -458,7 +458,7 @@ const Payment = () => {
 
                 {/* Total Amount */}
                 <div className="grid grid-cols-3 items-center gap-2 py-1.5 px-3">
-                  <Label className=" font-medium text-muted-foreground">Total Amount</Label>
+                  <Label className="font-bold text-gray-800 text-sm font-sans">Total Amount</Label>
                   <div className="col-span-2">
                     <Input
                       type="number"
@@ -473,8 +473,8 @@ const Payment = () => {
             </div>
 
             {/* Description */}
-            <div className="opacity-60 space-y-1">
-              <Label className=" font-medium text-muted-foreground px-1">
+            <div className=" space-y-1">
+              <Label className="font-bold text-gray-800 text-sm font-sans px-1">
                 Description
               </Label>
               <Textarea
@@ -486,11 +486,11 @@ const Payment = () => {
             </div>
 
             {/* Add Row Section */}
-            <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_auto] opacity-60 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_auto]  gap-4 items-end">
 
               {/* Account ID */}
               <div className="grid grid-cols-3 items-center gap-2 px-3">
-                <Label className="text-sm font-medium ">Account ID</Label>
+                <Label className="font-bold text-gray-800 text-sm font-sans">Account ID</Label>
                 <div className="col-span-2">
                   <Select
                     options={accounts}
@@ -535,7 +535,7 @@ const Payment = () => {
 
               {/* Particular */}
               <div className="grid grid-cols-3 items-center gap-2 px-3">
-                <Label className="text-sm font-medium text-muted-foreground">Particular</Label>
+                <Label className="font-bold text-gray-800 text-sm font-sans">Particular</Label>
                 <Input
                   type="text"
                   value={form.particular}
@@ -546,7 +546,7 @@ const Payment = () => {
 
               {/* Amount */}
               <div className="grid grid-cols-3 items-center gap-2 px-3">
-                <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
+                <Label className="font-bold text-gray-800 text-sm font-sans">Amount</Label>
                 <Input
                   type="number"
                   value={form.amount}
@@ -562,7 +562,7 @@ const Payment = () => {
                   variant="outline"
                   size="sm"
                   onClick={addRow}
-                  className="flex items-center gap-1 cursor-pointer"
+                  className="flex items-center gap-1 cursor-pointer font-bold text-gray-800 text-sm font-sans"
                 >
                   <span className="font-extrabold text-base leading-none">+</span>
                   Add
@@ -572,12 +572,12 @@ const Payment = () => {
 
             {/* Rows Table */}
             <div className="overflow-x-auto rounded-lg border">
-              <Table className="text-xs md:text-sm opacity-80">
+              <Table className="text-xs md:text-sm">
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="text-center font-medium">Account Code</TableHead>
-                    <TableHead className="text-center font-medium">Particulars</TableHead>
-                    <TableHead className="text-center font-medium">Amount</TableHead>
+                    <TableHead className="text-center font-bold text-gray-800 text-sm font-sans">Account Code</TableHead>
+                    <TableHead className="text-center font-bold text-gray-800 text-sm font-sans">Particulars</TableHead>
+                    <TableHead className="text-center font-bold text-gray-800 text-sm font-sans">Amount</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
