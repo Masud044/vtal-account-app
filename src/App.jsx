@@ -20,8 +20,10 @@ import LoginV2 from "./features/authentication-v2/index";
 import RegisterV2 from "./features/authentication-v2/register-index";
 import ProtectedRoute from "./pages/route/ProtectedRoute";
 import UnauthorizedPage from "./pages/route/Unauthorized";
-import WelcomePage from "./pages/WelcomePage";
+
 import { useAuthV2 } from "./features/authentication-v2/use-auth-v2";
+import WelcomePage from "./pages/welcomePage";
+
 
 const ADMIN           = ["Admin"];
 const ADMIN_INVENTORY = ["Admin", "Inventory"];
