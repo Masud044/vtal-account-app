@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,7 +47,7 @@ export default function RegisterFormV2() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "", employee_id: "", password: "",
-      confirmPassword: "", role_name: "USER",
+      confirmPassword: "", role_name: "",
     },
   });
 

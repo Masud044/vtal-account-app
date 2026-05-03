@@ -56,9 +56,9 @@ export default function UserDropDown() {
             <div className="grid flex-1 text-left text-sm leading-tight">
               {/* backend থেকে username আর employee_id আসে */}
               <span className="truncate font-semibold">{user.username}</span>
-              {/* <span className="text-muted-foreground truncate text-xs">
-                Employee ID: {user.employee_id}
-              </span> */}
+              <span className="text-muted-foreground truncate text-xs">
+                Role: {user.roles} user
+              </span>
             </div>
           </div>
         </DropdownMenuLabel>

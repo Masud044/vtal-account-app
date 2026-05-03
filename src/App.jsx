@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import './App.css'
 import { ToastContainer } from 'react-toastify';
 
@@ -18,6 +18,24 @@ import Requisitions from "./features/inventory-page/requisition-master";
 import ChartOfAccountPage from "./features/main-entry/chart-account";
 import LoginV2 from "./features/authentication-v2/index";
 import RegisterV2 from "./features/authentication-v2/register-index";
+import ProtectedRoute from "./pages/route/ProtectedRoute";
+import UnauthorizedPage from "./pages/route/Unauthorized";
+import WelcomePage from "./pages/WelcomePage";
+import { useAuthV2 } from "./features/authentication-v2/use-auth-v2";
+
+const ADMIN           = ["Admin"];
+const ADMIN_INVENTORY = ["Admin", "Inventory"];
+
+// ── Dashboard Index — role অনুযায়ী redirect ──────────────────────────────────
+const DashboardIndex = () => {
+  const { user, isLoading } = useAuthV2();
+  if (isLoading) return null;
+
+  if (user?.roles?.includes("Admin")) {
+    return <DashboardHome />;                          // Admin → DashboardHome
+  }
+  return <Navigate to="/dashboard/welcome" replace />; // Inventory → WelcomePage
+};
 
 function App() {
   return (
@@ -25,27 +43,67 @@ function App() {
       <ToastContainer position="top-right" autoClose={3000} />
       <Router>
         <Routes>
+
+          {/* Public */}
           <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<HomeLayout />}>
-            <Route index element={<DashboardHome />} />
-            <Route path="payment-voucher" element={<Payment />} />
-            <Route path="payment-voucher/:voucherId" element={<Payment />} />
-            <Route path="journal-voucher" element={<Journal />} />
-            <Route path="journal-voucher/:voucherId" element={<Journal />} />
-            <Route path="receive-voucher" element={<Receive />} />
-            <Route path="receive-create" element={<ReceiveCreate />} />
-            <Route path="receive-edit/:voucherId" element={<ReceiveEdit />} />
-            <Route path="chart-voucher" element={<ChartOfAccountPage />} />
-            <Route path="cash-voucher" element={<CashTransfer />} />
-            <Route path="cash-voucher/:voucherID" element={<CashTransfer />} />
-            <Route path="chart-account" element={<ChartOfAccountPage />} />
-            <Route path="inventory" element={<InventoriesPage />} />
-            <Route path="item-stock" element={<ItemStockPage />} />
-            <Route path="item" element={<ItemsPage />} />
-            <Route path="dispatch" element={<Requisitions />} />
-          </Route>
           <Route path="/login" element={<LoginV2 />} />
           <Route path="/register" element={<RegisterV2 />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+          {/* Protected Layout — Admin + Inventory */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute anyRole={ADMIN_INVENTORY}>
+                <HomeLayout />
+              </ProtectedRoute>
+            }
+          >
+            {/* ✅ Index — role অনুযায়ী DashboardHome বা Welcome */}
+            <Route index element={<DashboardIndex />} />
+
+            {/* Inventory welcome page */}
+            <Route path="welcome" element={<WelcomePage />} />
+
+            {/* Admin + Inventory উভয়ই */}
+            <Route path="inventory"  element={<InventoriesPage />} />
+            <Route path="item-stock" element={<ItemStockPage />} />
+            <Route path="item"       element={<ItemsPage />} />
+            <Route path="dispatch"   element={<Requisitions />} />
+
+            {/* Admin only */}
+            <Route path="payment-voucher" element={
+              <ProtectedRoute anyRole={ADMIN}><Payment /></ProtectedRoute>
+            } />
+            <Route path="payment-voucher/:voucherId" element={
+              <ProtectedRoute anyRole={ADMIN}><Payment /></ProtectedRoute>
+            } />
+            <Route path="journal-voucher" element={
+              <ProtectedRoute anyRole={ADMIN}><Journal /></ProtectedRoute>
+            } />
+            <Route path="journal-voucher/:voucherId" element={
+              <ProtectedRoute anyRole={ADMIN}><Journal /></ProtectedRoute>
+            } />
+            <Route path="receive-voucher" element={
+              <ProtectedRoute anyRole={ADMIN}><Receive /></ProtectedRoute>
+            } />
+            <Route path="receive-create" element={
+              <ProtectedRoute anyRole={ADMIN}><ReceiveCreate /></ProtectedRoute>
+            } />
+            <Route path="receive-edit/:voucherId" element={
+              <ProtectedRoute anyRole={ADMIN}><ReceiveEdit /></ProtectedRoute>
+            } />
+            <Route path="cash-voucher" element={
+              <ProtectedRoute anyRole={ADMIN}><CashTransfer /></ProtectedRoute>
+            } />
+            <Route path="cash-voucher/:voucherID" element={
+              <ProtectedRoute anyRole={ADMIN}><CashTransfer /></ProtectedRoute>
+            } />
+            <Route path="chart-account" element={
+              <ProtectedRoute anyRole={ADMIN}><ChartOfAccountPage /></ProtectedRoute>
+            } />
+          </Route>
+
         </Routes>
       </Router>
     </>

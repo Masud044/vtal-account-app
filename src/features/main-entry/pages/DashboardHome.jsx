@@ -129,7 +129,7 @@ const DashboardHome = () => {
       <div className="py-5 space-y-6 bg-slate-50/30 min-h-screen">
         
         {/* Stats Grid */}
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-3 ">
           <StatCard
             title="Money Income"
             value={income.total_income}

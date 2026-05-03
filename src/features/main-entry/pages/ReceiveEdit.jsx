@@ -385,8 +385,8 @@ const ReceiveEdit = () => {
           </div>
 
           <div>
-            <div className="grid grid-cols-3 opacity-60 px-3 items-center py-3">
-              <label className="font-medium block text-xs text-foreground">
+            <div className="grid grid-cols-3  px-3 items-center py-3">
+              <label className="font-bold text-sm text-gray-800 font-sans">
                 Customer
               </label>
               <select
@@ -405,8 +405,8 @@ const ReceiveEdit = () => {
           </div>
 
           <div>
-            <div className="grid grid-cols-3 opacity-60 px-3 items-center py-2">
-              <label className="font-medium block text-sm text-foreground">
+            <div className="grid grid-cols-3  px-3 items-center py-2">
+              <label className="font-bold text-sm text-gray-800 font-sans">
                 Entry Date
               </label>
               <input
@@ -419,8 +419,8 @@ const ReceiveEdit = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 opacity-60 px-3 items-center">
-              <label className="font-medium block text-sm text-foreground">
+            <div className="grid grid-cols-3  px-3 items-center">
+              <label className="font-bold text-sm text-gray-800 font-sans">
                 Invoice No
               </label>
               <input
@@ -431,8 +431,8 @@ const ReceiveEdit = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 opacity-60 py-2 px-3 items-center">
-              <label className="font-medium block text-sm text-foreground">
+            <div className="grid grid-cols-3  py-2 px-3 items-center">
+              <label className="font-bold text-sm text-gray-800 font-sans">
                 No. of Supporting
               </label>
               <input
@@ -445,8 +445,8 @@ const ReceiveEdit = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 opacity-60 py-2 px-3 items-center">
-              <label className="font-medium block text-sm text-foreground">
+            <div className="grid grid-cols-3  py-2 px-3 items-center">
+              <label className="font-bold text-sm text-gray-800 font-sans">
                 GL Date
               </label>
               <input
@@ -457,8 +457,8 @@ const ReceiveEdit = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 opacity-60 px-3 items-center">
-              <label className="font-medium block text-sm text-foreground">
+            <div className="grid grid-cols-3  px-3 items-center">
+              <label className="font-bold text-sm text-gray-800 font-sans">
                 Payment Code
               </label>
               <select
@@ -477,8 +477,8 @@ const ReceiveEdit = () => {
               </select>
             </div>
 
-            <div className="grid grid-cols-3 opacity-60 px-3 items-center py-3">
-              <label className="font-medium block text-sm text-foreground">
+            <div className="grid grid-cols-3  px-3 items-center py-3">
+              <label className="font-bold text-sm text-gray-800 font-sans">
                 Total Amount
               </label>
               <input
@@ -491,8 +491,8 @@ const ReceiveEdit = () => {
           </div>
         </div>
 
-        <div className="mt-4 mb-4 bg-white opacity-60">
-          <label className="block text-sm font-medium text-gray-600 mb-2 py-2 px-4 rounded-lg">
+        <div className="mt-4 mb-4 bg-white ">
+          <label className="font-bold text-sm text-gray-800 font-sans mb-2 py-2 px-4 rounded-lg">
             Description
           </label>
           <textarea
@@ -502,9 +502,9 @@ const ReceiveEdit = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_1fr] opacity-60 gap-4 rounded-lg justify-center items-center">
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_1fr]  gap-4 rounded-lg justify-center items-center">
           <div className="grid grid-cols-3 px-3 items-center py-1">
-            <label className="font-medium block text-sm text-foreground">
+            <label className="font-bold text-sm text-gray-800 font-sans">
               Account ID
             </label>
             <Select
@@ -537,7 +537,7 @@ const ReceiveEdit = () => {
           </div>
 
           <div className="grid grid-cols-3 px-3 items-center py-3">
-            <label className="font-medium block text-sm text-foreground">
+            <label className="font-bold text-sm text-gray-800 font-sans">
               Particular
             </label>
             <input
@@ -549,7 +549,7 @@ const ReceiveEdit = () => {
           </div>
 
           <div className="grid grid-cols-3 px-3 items-center py-3">
-            <label className="font-medium block text-sm text-foreground">
+            <label className="font-bold text-sm text-gray-800 font-sans">
               Amount
             </label>
             <input
@@ -564,7 +564,7 @@ const ReceiveEdit = () => {
             <button
               type="button"
               onClick={addRow}
-              className="text-black cursor-pointer border px-3 py-1 rounded-lg flex items-center"
+              className="font-bold text-sm text-gray-800 font-sans cursor-pointer border px-3 py-1 rounded-lg flex items-center"
             >
               <span className="mr-1 font-extrabold">+</span>Add
             </button>
@@ -572,19 +572,19 @@ const ReceiveEdit = () => {
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
-          <table className="w-full border-collapse opacity-80 rounded-lg text-xs md:text-sm">
+          <table className="w-full border-collapse  rounded-lg text-xs md:text-sm">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-2 md:px-4 py-2 text-center font-medium">
+                <th className="px-2 md:px-4 py-2 text-center font-bold text-sm text-gray-800 font-sans">
                   Account Code
                 </th>
-                <th className="px-2 md:px-4 py-2 text-center font-medium">
+                <th className="px-2 md:px-4 py-2 text-center font-bold text-sm text-gray-800 font-sans">
                   Particulars
                 </th>
-                <th className="px-2 md:px-4 py-2 text-center font-medium">
+                <th className="px-2 md:px-4 py-2 text-center font-bold text-sm text-gray-800 font-sans">
                   Amount
                 </th>
-                <th className="px-2 md:px-4 py-2 text-center font-medium w-10"></th>
+                <th className="px-2 md:px-4 py-2 text-center font-bold text-sm text-gray-800 font-sans w-10"></th>
               </tr>
             </thead>
             <tbody>

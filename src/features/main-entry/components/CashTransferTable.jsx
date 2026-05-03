@@ -108,7 +108,7 @@ export default function CashTransferTable() {
     {
       accessorKey: "VOUCHERNO",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Voucher No <ArrowUpDown />
         </Button>
       ),
@@ -117,7 +117,7 @@ export default function CashTransferTable() {
     {
       accessorKey: "TRANS_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Transaction Date <ArrowUpDown />
         </Button>
       ),
@@ -126,15 +126,27 @@ export default function CashTransferTable() {
     {
       accessorKey: "GL_ENTRY_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           GL Date <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => <div className="ml-3">{row.getValue("GL_ENTRY_DATE")}</div>,
     },
-    {
+    // {
+    //   accessorKey: "DESCRIPTION",
+    //   header: "Description",
+    //   cell: ({ row }) => (
+    //     <div className="max-w-[200px] truncate" title={row.getValue("DESCRIPTION")}>
+    //       {row.getValue("DESCRIPTION")}
+    //     </div>
+    //   ),
+    // },
+
+     {
       accessorKey: "DESCRIPTION",
-      header: "Description",
+      header: () => (
+        <div className="text-left font-bold text-gray-800 text-sm font-sans">Description</div>
+      ),
       cell: ({ row }) => (
         <div className="max-w-[200px] truncate" title={row.getValue("DESCRIPTION")}>
           {row.getValue("DESCRIPTION")}
@@ -144,7 +156,7 @@ export default function CashTransferTable() {
     {
       accessorKey: "DEBIT",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Debit <ArrowUpDown />
         </Button>
       ),
@@ -159,7 +171,7 @@ export default function CashTransferTable() {
     {
       accessorKey: "CREDIT",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Credit <ArrowUpDown />
         </Button>
       ),
@@ -174,7 +186,7 @@ export default function CashTransferTable() {
     {
       id: "actions",
       enableHiding: false,
-      header: () => <div className="text-center">Actions</div>,
+      header: () => <div className="text-center  font-bold text-gray-800 text-sm font-sans">Actions</div>,
       cell: ({ row }) => {
         const voucher = row.original;
 
