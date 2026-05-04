@@ -288,7 +288,7 @@ export default function PaymentTable() {
               </TooltipProvider>
             ) : (
               <Button
-                variant="ghost"
+                // variant="ghost"
                 size="icon"
                 onClick={() => handleDeleteClick(voucher)}
                 title="Delete Voucher"

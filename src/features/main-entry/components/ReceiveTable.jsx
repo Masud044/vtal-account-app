@@ -288,7 +288,7 @@ export default function ReceiveTable() {
               </TooltipProvider>
             ) : (
               <Button
-                variant="ghost"
+                // variant="ghost"
                 size="icon"
                 onClick={() => handleDeleteClick(voucher)}
                 title="Delete Voucher"

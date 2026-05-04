@@ -71,6 +71,8 @@ export const NAV_ITEMS = [
       { to: "/dashboard/journal-voucher", label: "Journal Voucher", Icon: Plus },
       { to: "/dashboard/cash-voucher", label: "Cash Transfer", Icon: Plus },
       { to: "/dashboard/chart-account", label: "Chart of Account", Icon: Wrench },
+      { to: "/dashboard/customer", label: "Customer Info", Icon: Wrench },
+      { to: "/dashboard/supplier", label: "Supplier Info", Icon: Wrench },
     ],
   },
   {
@@ -81,6 +83,19 @@ export const NAV_ITEMS = [
       { to: "/dashboard/daily-income", label: "Daily Income Report", Icon: ClipboardList },
       { to: "/dashboard/ledger", label: "Ledger", Icon: FileText },
       { to: "/dashboard/cash-book", label: "Cash Book", Icon: FileText },
+      { to: "/dashboard/cash-book", label: "Cash Book", Icon: FileText },
+      
+    ],
+  },
+
+  {
+    label: "User Management",
+    roles: ["Admin"],                  // শুধু Admin
+    links: [
+      { to: "/dashboard/user-management", label: "User Management", Icon: ClipboardList },
+      { to: "/dashboard/module", label: "Module", Icon: ClipboardList },
+      { to: "/dashboard/role", label: "Role", Icon: FileText },
+      { to: "/dashboard/permission", label: "Permission", Icon: FileText },
     ],
   },
   {
