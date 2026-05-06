@@ -61,8 +61,8 @@ const ReceiveCreate = () => {
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
-      const res = await axios.get(`${url}/api/account-code`);
-      if (res.data.success === 1) {
+      const res = await axios.get(`${url}/api/receive-account-code`);
+      if (res.data.success === true) {
         return res.data.data.map((acc) => ({
           value: acc.ACCOUNT_ID,
           label: `${acc.ACCOUNT_ID} - ${acc.ACCOUNT_NAME}`,

@@ -98,8 +98,8 @@ const Payment = () => {
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
-      const res = await axios.get(`${url}/api/receive-account-code`);
-      return res.data.success === true
+      const res = await axios.get(`${url}/api/account-code`);
+      return res.data.success === 1
         ? res.data.data.map((a) => ({ value: a.ACCOUNT_ID, label: `${a.ACCOUNT_ID} - ${a.ACCOUNT_NAME}`, name: a.ACCOUNT_NAME }))
         : [];
     },
