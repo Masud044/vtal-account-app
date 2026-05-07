@@ -13,9 +13,10 @@ import {
   Download,
   FileText,
   FileSpreadsheet,
+  PlusIcon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { DataTablePagination } from "@/components/DataTablePagination";
 import { toast } from "react-toastify";
@@ -44,11 +46,11 @@ import axios from "axios";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function CashTransferTable() {
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
+  const [sorting, setSorting]               = useState([]);
+  const [columnFilters, setColumnFilters]   = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [downloading, setDownloading] = useState(null);
+  const [globalFilter, setGlobalFilter]     = useState("");
+  const [downloading, setDownloading]       = useState(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["unpostedCashTransfers"],
@@ -63,41 +65,31 @@ export default function CashTransferTable() {
     return [...vouchers].sort((a, b) => Number(b.ID) - Number(a.ID));
   }, [data]);
 
-  // ── Download handler ───────────────────────────────────────────────────────
+  // ── Download handler ─────────────────────────────────────────────────────────
   const handleDownload = async (voucher, type) => {
     const key = `${voucher.ID}-${type}`;
     setDownloading(key);
-
     try {
       const response = await fetch(
         `${BASE_URL}/api/cash-transfer/download/${voucher.ID}?type=${type}`
       );
-
       if (!response.ok) {
         let errMsg = `Server error ${response.status}`;
-        try {
-          const errBody = await response.json();
-          errMsg = errBody.detail || errBody.message || errMsg;
-        } catch { /* ignore */ }
+        try { const b = await response.json(); errMsg = b.detail || b.message || errMsg; } catch { /* ignore */ }
         toast.error(`Download failed: ${errMsg}`);
         return;
       }
-
       const blob      = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
       const anchor    = document.createElement("a");
-      const ext       = type === "pdf" ? "pdf" : "xlsx";
-
       anchor.href     = objectUrl;
-      anchor.download = `cash_transfer_${voucher.VOUCHERNO}.${ext}`;
+      anchor.download = `cash_transfer_${voucher.VOUCHERNO}.${type === "pdf" ? "pdf" : "xlsx"}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-
       toast.success(`${type.toUpperCase()} downloaded successfully!`);
     } catch (err) {
-      console.error(`[handleDownload] cash-transfer ${type} error:`, err);
       toast.error(`Error downloading ${type.toUpperCase()}: ${err.message}`);
     } finally {
       setDownloading(null);
@@ -108,7 +100,8 @@ export default function CashTransferTable() {
     {
       accessorKey: "VOUCHERNO",
       header: ({ column }) => (
-        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Voucher No <ArrowUpDown />
         </Button>
       ),
@@ -117,7 +110,8 @@ export default function CashTransferTable() {
     {
       accessorKey: "TRANS_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Transaction Date <ArrowUpDown />
         </Button>
       ),
@@ -126,23 +120,14 @@ export default function CashTransferTable() {
     {
       accessorKey: "GL_ENTRY_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           GL Date <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => <div className="ml-3">{row.getValue("GL_ENTRY_DATE")}</div>,
     },
-    // {
-    //   accessorKey: "DESCRIPTION",
-    //   header: "Description",
-    //   cell: ({ row }) => (
-    //     <div className="max-w-[200px] truncate" title={row.getValue("DESCRIPTION")}>
-    //       {row.getValue("DESCRIPTION")}
-    //     </div>
-    //   ),
-    // },
-
-     {
+    {
       accessorKey: "DESCRIPTION",
       header: () => (
         <div className="text-left font-bold text-gray-800 text-sm font-sans">Description</div>
@@ -156,40 +141,37 @@ export default function CashTransferTable() {
     {
       accessorKey: "DEBIT",
       header: ({ column }) => (
-        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Debit <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => {
         const amount    = parseFloat(row.getValue("DEBIT") || 0);
-        const formatted = new Intl.NumberFormat("en-US", {
-          minimumFractionDigits: 2, maximumFractionDigits: 2,
-        }).format(amount);
+        const formatted = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
         return <div className="font-medium ml-3">{formatted}</div>;
       },
     },
     {
       accessorKey: "CREDIT",
       header: ({ column }) => (
-        <Button variant="ghost" className=" font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Credit <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => {
         const amount    = parseFloat(row.getValue("CREDIT") || 0);
-        const formatted = new Intl.NumberFormat("en-US", {
-          minimumFractionDigits: 2, maximumFractionDigits: 2,
-        }).format(amount);
+        const formatted = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
         return <div className="font-medium ml-3">{formatted}</div>;
       },
     },
     {
       id: "actions",
       enableHiding: false,
-      header: () => <div className="text-center  font-bold text-gray-800 text-sm font-sans">Actions</div>,
+      header: () => <div className="text-center font-bold text-gray-800 text-sm font-sans">Actions</div>,
       cell: ({ row }) => {
         const voucher = row.original;
-
         return (
           <div className="flex items-center justify-center">
             <DropdownMenu>
@@ -197,34 +179,24 @@ export default function CashTransferTable() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8  hover:text-violet-700"
                   title="Download"
                   disabled={downloading?.startsWith(`${voucher.ID}-`)}
                 >
                   <Download size={16} />
                 </Button>
               </DropdownMenuTrigger>
-
               <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Download as
-                </DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Download as</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
+                <DropdownMenuItem className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-pdf`}
-                  onClick={() => handleDownload(voucher, "pdf")}
-                >
+                  onClick={() => handleDownload(voucher, "pdf")}>
                   <FileText size={14} className="text-red-500" />
                   {downloading === `${voucher.ID}-pdf` ? "Generating…" : "PDF"}
                 </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
+                <DropdownMenuItem className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-excel`}
-                  onClick={() => handleDownload(voucher, "excel")}
-                >
+                  onClick={() => handleDownload(voucher, "excel")}>
                   <FileSpreadsheet size={14} className="text-green-600" />
                   {downloading === `${voucher.ID}-excel` ? "Generating…" : "Excel"}
                 </DropdownMenuItem>
@@ -237,49 +209,37 @@ export default function CashTransferTable() {
   ];
 
   const table = useReactTable({
-    data: sortedVouchers,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
+    data: sortedVouchers, columns,
+    onSortingChange: setSorting, onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(), getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(), getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility, onGlobalFilterChange: setGlobalFilter,
     state: { sorting, columnFilters, columnVisibility, globalFilter },
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-12">
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-red-600">Error loading records.</p>
-        </div>
-      </div>
-    );
-  }
+  if (error) return (
+    <div className="flex items-center justify-center py-12">
+      <p className="text-red-600">Error loading records.</p>
+    </div>
+  );
 
   return (
-    <>
-      <Helmet>
-        <title>Dashboard | Cash Transfer List | HRMS</title>
-      </Helmet>
+    <div className="mt-6">
+      <Card className="w-full shadow-lg">
+        <CardHeader className="border-b">
+          <CardTitle className="text-sm font-bold">Cash Transfer</CardTitle>
+        </CardHeader>
 
-      <div className="min-h-screen">
-        <div className="bg-card rounded-md mt-4 shadow-sm p-4">
+        <div className="bg-card rounded-md p-4">
           <div className="space-y-4">
 
+            {/* Search + Columns + Add New */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Input
                 placeholder="Search records..."
@@ -294,23 +254,28 @@ export default function CashTransferTable() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {table
-                    .getAllColumns()
-                    .filter((col) => col.getCanHide())
-                    .map((col) => (
-                      <DropdownMenuCheckboxItem
-                        key={col.id}
-                        className="capitalize"
-                        checked={col.getIsVisible()}
-                        onCheckedChange={(value) => col.toggleVisibility(!!value)}
-                      >
-                        {col.id.replace(/_/g, " ")}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                  {table.getAllColumns().filter((col) => col.getCanHide()).map((col) => (
+                    <DropdownMenuCheckboxItem
+                      key={col.id}
+                      className="capitalize"
+                      checked={col.getIsVisible()}
+                      onCheckedChange={(value) => col.toggleVisibility(!!value)}
+                    >
+                      {col.id.replace(/_/g, " ")}
+                    </DropdownMenuCheckboxItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <Link to="/dashboard/cash-transfer-create">
+                <Button>
+                  <PlusIcon size={16} className="mr-2" />
+                  Add New Transfer
+                </Button>
+              </Link>
             </div>
 
+            {/* Table */}
             <div className="overflow-hidden rounded-md border">
               <Table>
                 <TableHeader>
@@ -327,7 +292,7 @@ export default function CashTransferTable() {
                 <TableBody>
                   {table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                      <TableRow key={row.id}>
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -349,7 +314,7 @@ export default function CashTransferTable() {
             <DataTablePagination table={table} />
           </div>
         </div>
-      </div>
-    </>
+      </Card>
+    </div>
   );
 }

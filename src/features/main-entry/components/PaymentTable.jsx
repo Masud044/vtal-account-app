@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Pencil,
   Trash2,
+  PlusIcon,
   Download,
   FileText,
   FileSpreadsheet,
@@ -46,6 +47,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { DataTablePagination } from "@/components/DataTablePagination";
 import { PaymentService } from "@/api/AccontingApi";
@@ -55,12 +57,12 @@ import axios from "axios";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function PaymentTable() {
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
+  const [sorting, setSorting]               = useState([]);
+  const [columnFilters, setColumnFilters]   = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [deleteModal, setDeleteModal] = useState({ show: false, id: null, voucherNo: "" });
-  const [downloading, setDownloading] = useState(null);
+  const [globalFilter, setGlobalFilter]     = useState("");
+  const [deleteModal, setDeleteModal]       = useState({ show: false, id: null, voucherNo: "" });
+  const [downloading, setDownloading]       = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -108,39 +110,25 @@ export default function PaymentTable() {
   const handleDownload = async (voucher, type) => {
     const key = `${voucher.ID}-${type}`;
     setDownloading(key);
-
     try {
-      const response = await fetch(
-        `${BASE_URL}/api/voucher/download/${voucher.ID}?type=${type}`
-      );
-
+      const response = await fetch(`${BASE_URL}/api/voucher/download/${voucher.ID}?type=${type}`);
       if (!response.ok) {
         let errMsg = `Server error ${response.status}`;
-        try {
-          const errBody = await response.json();
-          errMsg = errBody.detail || errBody.message || errMsg;
-        } catch {
-          // ignore
-        }
+        try { const b = await response.json(); errMsg = b.detail || b.message || errMsg; } catch { /* ignore */ }
         toast.error(`Download failed: ${errMsg}`);
         return;
       }
-
-      const blob = await response.blob();
+      const blob      = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      const ext = type === "pdf" ? "pdf" : "xlsx";
-
-      anchor.href = objectUrl;
-      anchor.download = `payment_voucher_${voucher.VOUCHERNO}.${ext}`;
+      const anchor    = document.createElement("a");
+      anchor.href     = objectUrl;
+      anchor.download = `payment_voucher_${voucher.VOUCHERNO}.${type === "pdf" ? "pdf" : "xlsx"}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-
       setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       toast.success(`${type.toUpperCase()} downloaded successfully!`);
     } catch (err) {
-      console.error(`[handleDownload] ${type} error:`, err);
       toast.error(`Error downloading ${type.toUpperCase()}: ${err.message}`);
     } finally {
       setDownloading(null);
@@ -151,7 +139,8 @@ export default function PaymentTable() {
     {
       accessorKey: "VOUCHERNO",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Voucher No <ArrowUpDown />
         </Button>
       ),
@@ -160,7 +149,8 @@ export default function PaymentTable() {
     {
       accessorKey: "TRANS_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Transaction Date <ArrowUpDown />
         </Button>
       ),
@@ -169,27 +159,16 @@ export default function PaymentTable() {
     {
       accessorKey: "GL_ENTRY_DATE",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           GL Date <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => <div className="ml-3">{row.getValue("GL_ENTRY_DATE")}</div>,
     },
-    // {
-    //   accessorKey: "DESCRIPTION",
-    //   header: "Description",
-    //   cell: ({ row }) => (
-    //     <div className="max-w-[200px] truncate" title={row.getValue("DESCRIPTION")}>
-    //       {row.getValue("DESCRIPTION")}
-    //     </div>
-    //   ),
-    // },
-
-     {
+    {
       accessorKey: "DESCRIPTION",
-      header: () => (
-        <div className="text-left font-bold text-gray-800 text-sm font-sans">Description</div>
-      ),
+      header: () => <div className="text-left font-bold text-gray-800 text-sm font-sans">Description</div>,
       cell: ({ row }) => (
         <div className="max-w-[200px] truncate" title={row.getValue("DESCRIPTION")}>
           {row.getValue("DESCRIPTION")}
@@ -199,16 +178,14 @@ export default function PaymentTable() {
     {
       accessorKey: "CREDIT",
       header: ({ column }) => (
-        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button variant="ghost" className="font-bold text-gray-800 text-sm font-sans"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Credit <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => {
-        const amount = parseFloat(row.getValue("CREDIT") || 0);
-        const formatted = new Intl.NumberFormat("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(amount);
+        const amount    = parseFloat(row.getValue("CREDIT") || 0);
+        const formatted = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
         return <div className="font-medium ml-3">{formatted}</div>;
       },
     },
@@ -217,62 +194,53 @@ export default function PaymentTable() {
       enableHiding: false,
       header: () => <div className="text-center font-bold text-gray-800 text-sm font-sans">Actions</div>,
       cell: ({ row }) => {
-        const voucher = row.original;
+        const voucher    = row.original;
         const isApproved = voucher.POSTED === 1 || voucher.POSTED === "1";
 
         return (
           <div className="flex items-center justify-center gap-1">
 
-            {/* Edit — approved হলে disabled */}
+            {/* Edit */}
             {isApproved ? (
               <Button variant="ghost" size="icon" disabled className="opacity-30 cursor-not-allowed">
                 <Pencil size={16} />
               </Button>
             ) : (
-              <Link to={`/dashboard/payment-voucher/${voucher.ID}`} title="Edit Voucher">
+              /* ← updated route to use the new PaymentEdit page */
+              <Link to={`/dashboard/payment-edit/${voucher.ID}`} title="Edit Voucher">
                 <Button variant="ghost" size="icon">
                   <Pencil size={16} />
                 </Button>
               </Link>
             )}
 
-            {/* Download — সবসময় active */}
+            {/* Download */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  title="Download"
-                  disabled={downloading?.startsWith(`${voucher.ID}-`)}
-                >
+                <Button variant="ghost" size="icon" title="Download"
+                  disabled={downloading?.startsWith(`${voucher.ID}-`)}>
                   <Download size={16} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Download as
-                </DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Download as</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
+                <DropdownMenuItem className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-pdf`}
-                  onClick={() => handleDownload(voucher, "pdf")}
-                >
+                  onClick={() => handleDownload(voucher, "pdf")}>
                   <FileText size={14} className="text-red-500" />
                   {downloading === `${voucher.ID}-pdf` ? "Generating…" : "PDF"}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
+                <DropdownMenuItem className="cursor-pointer gap-2"
                   disabled={downloading === `${voucher.ID}-excel`}
-                  onClick={() => handleDownload(voucher, "excel")}
-                >
+                  onClick={() => handleDownload(voucher, "excel")}>
                   <FileSpreadsheet size={14} className="text-green-600" />
                   {downloading === `${voucher.ID}-excel` ? "Generating…" : "Excel"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Approved tooltip icon OR Delete */}
+            {/* Approved badge OR Delete */}
             {isApproved ? (
               <TooltipProvider>
                 <Tooltip>
@@ -287,16 +255,10 @@ export default function PaymentTable() {
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <Button
-                // variant="ghost"
-                size="icon"
-                onClick={() => handleDeleteClick(voucher)}
-                title="Delete Voucher"
-              >
+              <Button size="icon" onClick={() => handleDeleteClick(voucher)} title="Delete Voucher">
                 <Trash2 size={16} />
               </Button>
             )}
-
           </div>
         );
       },
@@ -304,38 +266,29 @@ export default function PaymentTable() {
   ];
 
   const table = useReactTable({
-    data: sortedVouchers,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
+    data: sortedVouchers, columns,
+    onSortingChange: setSorting, onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(), getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(), getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility, onGlobalFilterChange: setGlobalFilter,
     state: { sorting, columnFilters, columnVisibility, globalFilter },
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Loading vouchers...</p>
-        </div>
+  if (isLoading) return (
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Loading vouchers...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-red-600">Error loading vouchers.</p>
-        </div>
+  if (error) return (
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      <div className="flex items-center justify-center py-12">
+        <p className="text-red-600">Error loading vouchers.</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <>
@@ -343,29 +296,31 @@ export default function PaymentTable() {
         <title>Dashboard | Payment Vouchers | HRMS</title>
       </Helmet>
 
-      <div className="min-h-screen">
-        <div className="bg-card rounded-md mt-4 shadow-sm p-4">
-          <div className="space-y-4">
+      <div className="mt-6">
+        <Card className="w-full shadow-lg">
+          <CardHeader className="border-b">
+            <CardTitle className="text-sm font-bold">Payment Voucher</CardTitle>
+          </CardHeader>
 
-            {/* Search + Column visibility */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input
-                placeholder="Search vouchers..."
-                value={globalFilter ?? ""}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="max-w-sm"
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
-                    Columns <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {table
-                    .getAllColumns()
-                    .filter((col) => col.getCanHide())
-                    .map((col) => (
+          <div className="bg-card rounded-md p-4">
+            <div className="space-y-4">
+
+              {/* Search + Column visibility + Add New */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Input
+                  placeholder="Search vouchers..."
+                  value={globalFilter ?? ""}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="max-w-sm"
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="ml-auto">
+                      Columns <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {table.getAllColumns().filter((col) => col.getCanHide()).map((col) => (
                       <DropdownMenuCheckboxItem
                         key={col.id}
                         className="capitalize"
@@ -375,49 +330,58 @@ export default function PaymentTable() {
                         {col.id.replace(/_/g, " ")}
                       </DropdownMenuCheckboxItem>
                     ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-            {/* Table */}
-            <div className="overflow-hidden rounded-md border">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((hg) => (
-                    <TableRow key={hg.id}>
-                      {hg.headers.map((h) => (
-                        <TableHead key={h.id}>
-                          {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
+                {/* ← Link to the new create page */}
+                <Link to="/dashboard/payment-create">
+                  <Button>
+                    <PlusIcon size={16} className="mr-2" />
+                    Add New Payment
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-hidden rounded-md border">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((hg) => (
+                      <TableRow key={hg.id}>
+                        {hg.headers.map((h) => (
+                          <TableHead key={h.id}>
+                            {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                          </TableHead>
                         ))}
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={columns.length} className="h-24 text-center">
-                        <p className="text-muted-foreground">No payment vouchers found</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                          <p className="text-muted-foreground">No payment vouchers found</p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
 
-            <DataTablePagination table={table} />
+              <DataTablePagination table={table} />
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Delete Confirmation Modal */}

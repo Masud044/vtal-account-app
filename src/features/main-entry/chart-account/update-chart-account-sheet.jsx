@@ -4,28 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "react-toastify";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BookOpen } from "lucide-react";
@@ -51,45 +38,23 @@ const defaultValues = {
   lastLevel:     "0",
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-// PARENT_ACCOUNT_ID দিয়ে match করে সেই row-এর String(ID) return করে
-// function resolveInitialLevels(allAccounts, parentAccountId) {
-//   if (!parentAccountId || parentAccountId === "0") {
-//     return { firstLevelId: "", secondLevelId: "", thirdLevelId: "" };
-//   }
-
-//   const parent = allAccounts.find((a) => a.ACCOUNT_ID === parentAccountId);
-//   if (!parent) return { firstLevelId: "", secondLevelId: "", thirdLevelId: "" };
-
-//   const rowId = String(parent.ID); // ← row PK — Add sheet-এর মতো same
-//   const lvl   = Number(parent.LEBEL);
-
-//   if (lvl === 1) return { firstLevelId: rowId, secondLevelId: "", thirdLevelId: "" };
-//   if (lvl === 2) return { firstLevelId: "", secondLevelId: rowId, thirdLevelId: "" };
-//   if (lvl === 3) return { firstLevelId: "", secondLevelId: "", thirdLevelId: rowId };
-//   return { firstLevelId: "", secondLevelId: "", thirdLevelId: "" };
-// }
-
+// ── Helper — walk up the tree to fill all three level IDs ─────────────────────
 function resolveInitialLevels(allAccounts, parentAccountId) {
   if (!parentAccountId || parentAccountId === "0") {
     return { firstLevelId: "", secondLevelId: "", thirdLevelId: "" };
   }
 
   const result = { firstLevelId: "", secondLevelId: "", thirdLevelId: "" };
-
-  // Direct parent থেকে শুরু করে Level 1 পর্যন্ত উপরে উঠতে থাকবে
-  let current = allAccounts.find((a) => a.ACCOUNT_ID === parentAccountId);
+  let current  = allAccounts.find((a) => a.ACCOUNT_ID === parentAccountId);
 
   while (current) {
     const lvl   = Number(current.LEBEL);
     const rowId = String(current.ID);
 
-    if (lvl === 1) { result.firstLevelId  = rowId; break; } // root পেয়েছি, থামো
-    if (lvl === 2) { result.secondLevelId = rowId; }
-    if (lvl === 3) { result.thirdLevelId  = rowId; }
+    if (lvl === 1) { result.firstLevelId  = rowId; break; }
+    if (lvl === 2)   result.secondLevelId = rowId;
+    if (lvl === 3)   result.thirdLevelId  = rowId;
 
-    // এক ধাপ উপরে যাও — parent এর parent খোঁজো
     current = allAccounts.find((a) => a.ACCOUNT_ID === current.PARENT_ACCOUNT_ID);
   }
 
@@ -101,26 +66,36 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
   const updateMutation = useUpdateChartOfAccount();
   const { data: allAccounts = [] } = useChartOfAccounts();
 
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues,
-  });
-
+  const form = useForm({ resolver: zodResolver(formSchema), defaultValues });
   const { formState: { isDirty } } = form;
 
-  // ── Dropdown options — value = String(a.ID) (row PK) ─────────────────────
+  // Watch selected IDs for cascading filter
+  const firstLevelId  = form.watch("firstLevelId");
+  const secondLevelId = form.watch("secondLevelId");
+
+  // ── Cascading dropdown options ─────────────────────────────────────────────
   const level1Options = useMemo(
     () => allAccounts.filter((a) => Number(a.LEBEL) === 1),
     [allAccounts]
   );
-  const level2Options = useMemo(
-    () => allAccounts.filter((a) => Number(a.LEBEL) === 2),
-    [allAccounts]
-  );
-  const level3Options = useMemo(
-    () => allAccounts.filter((a) => Number(a.LEBEL) === 3),
-    [allAccounts]
-  );
+
+  const level2Options = useMemo(() => {
+    if (!firstLevelId) return [];
+    const parent = allAccounts.find((a) => String(a.ID) === firstLevelId);
+    if (!parent) return [];
+    return allAccounts.filter(
+      (a) => Number(a.LEBEL) === 2 && a.PARENT_ACCOUNT_ID === parent.ACCOUNT_ID
+    );
+  }, [allAccounts, firstLevelId]);
+
+  const level3Options = useMemo(() => {
+    if (!secondLevelId) return [];
+    const parent = allAccounts.find((a) => String(a.ID) === secondLevelId);
+    if (!parent) return [];
+    return allAccounts.filter(
+      (a) => Number(a.LEBEL) === 3 && a.PARENT_ACCOUNT_ID === parent.ACCOUNT_ID
+    );
+  }, [allAccounts, secondLevelId]);
 
   // ── Auto-fill when account prop arrives ──────────────────────────────────
   useEffect(() => {
@@ -143,7 +118,6 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
   const onSubmit = async (data) => {
     if (!account?.ID) { toast.error("Account ID is missing."); return; }
 
-    // Add sheet-এর মতো same drop_X pattern — backend same logic চালাবে
     const payload = {
       account_name: data.accountName,
       lastlevel:    Number(data.lastLevel),
@@ -212,9 +186,10 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
                 </FormItem>
               )} />
 
-              {/* Level Selects — value = String(a.ID) */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* Level Selects */}
+              <div className="grid grid-cols-2 gap-4">
 
+                {/* First Level */}
                 <FormField control={form.control} name="firstLevelId" render={({ field }) => (
                   <FormItem>
                     <FormLabel>First Level</FormLabel>
@@ -228,12 +203,12 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
                       }}
                     >
                       <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select First Level" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       </FormControl>
                       <SelectContent className="z-106">
                         {level1Options.map((a) => (
                           <SelectItem key={a.ID} value={String(a.ID)}>
-                            {a.ACCOUNT_NAME}
+                            {String(a.ACCOUNT_NAME).trim()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -242,11 +217,12 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
                   </FormItem>
                 )} />
 
+                {/* Second Level — disabled until L1 selected */}
                 <FormField control={form.control} name="secondLevelId" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Second Level</FormLabel>
                     <Select
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !firstLevelId}
                       value={field.value || ""}
                       onValueChange={(val) => {
                         field.onChange(val);
@@ -254,12 +230,14 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
                       }}
                     >
                       <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select Second Level" /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue placeholder={firstLevelId ? "Select" : "Select L1 first"} />
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent className="z-106">
                         {level2Options.map((a) => (
                           <SelectItem key={a.ID} value={String(a.ID)}>
-                            {a.ACCOUNT_NAME}
+                            {String(a.ACCOUNT_NAME).trim()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -268,43 +246,43 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
                   </FormItem>
                 )} />
 
-                <FormField control={form.control} name="thirdLevelId" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Third Level</FormLabel>
-                    <Select
-                      disabled={isSubmitting}
-                      value={field.value || ""}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select Third Level" /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="z-106">
-                        {level3Options.map((a) => (
-                          <SelectItem key={a.ID} value={String(a.ID)}>
-                            {a.ACCOUNT_NAME}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+               
 
               </div>
 
               {/* Enabled + Last Level */}
               <div className="grid grid-cols-2 gap-4">
+
+                 {/* Third Level — disabled until L2 selected */}
+                <FormField control={form.control} name="thirdLevelId" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Third Level</FormLabel>
+                    <Select
+                      disabled={isSubmitting || !secondLevelId}
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={secondLevelId ? "Select" : "Select L2 first"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="z-106">
+                        {level3Options.map((a) => (
+                          <SelectItem key={a.ID} value={String(a.ID)}>
+                            {String(a.ACCOUNT_NAME).trim()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <FormField control={form.control} name="enabled" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Enabled</FormLabel>
                     <FormControl>
-                      <RadioGroup
-                        disabled={isSubmitting}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="flex items-center gap-6 pt-1"
-                      >
+                      <RadioGroup disabled={isSubmitting} onValueChange={field.onChange} value={field.value} className="flex items-center gap-6 pt-1">
                         <div className="flex items-center gap-2">
                           <RadioGroupItem value="1" id="upd-en-yes" />
                           <label htmlFor="upd-en-yes" className="text-sm cursor-pointer">Yes</label>
@@ -319,16 +297,13 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
                   </FormItem>
                 )} />
 
-                <FormField control={form.control} name="lastLevel" render={({ field }) => (
+             
+              </div>
+                 <FormField control={form.control} name="lastLevel" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Last Level</FormLabel>
                     <FormControl>
-                      <RadioGroup
-                        disabled={isSubmitting}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="flex items-center gap-6 pt-1"
-                      >
+                      <RadioGroup disabled={isSubmitting} onValueChange={field.onChange} value={field.value} className="flex items-center gap-6 pt-1">
                         <div className="flex items-center gap-2">
                           <RadioGroupItem value="1" id="upd-ll-yes" />
                           <label htmlFor="upd-ll-yes" className="text-sm cursor-pointer">Yes</label>
@@ -342,7 +317,6 @@ export default function UpdateChartSheet({ open, onOpenChange, showConfirmation,
                     <FormMessage />
                   </FormItem>
                 )} />
-              </div>
 
             </div>
 

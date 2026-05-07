@@ -61,22 +61,29 @@ import {
 
 
 export const NAV_ITEMS = [
+ {
+    label: "Home",
+    roles: ["Admin"],            
+    links: [
+       { to: "/dashboard", label: "Home", Icon: Home },
+     
+    ],
+  },
+
   {
-    label: "Main Entry",
+    label: "Voucher Entry",
     roles: ["Admin"],                  // শুধু Admin
     links: [
-      { to: "/dashboard", label: "Home", Icon: Home },
+     
       { to: "/dashboard/receive-voucher", label: "Receive Voucher", Icon: Home },
       { to: "/dashboard/payment-voucher", label: "Payment Voucher", Icon: FileText },
       { to: "/dashboard/journal-voucher", label: "Journal Voucher", Icon: Plus },
-      { to: "/dashboard/cash-voucher", label: "Cash Transfer", Icon: Plus },
-      { to: "/dashboard/chart-account", label: "Chart of Account", Icon: Wrench },
-      { to: "/dashboard/customer", label: "Customer Info", Icon: Wrench },
-      { to: "/dashboard/supplier", label: "Supplier Info", Icon: Wrench },
+      { to: "/dashboard/cash-Transfer", label: "Cash Transfer", Icon: Plus },
+      
     ],
   },
   {
-    label: "Main Report",
+    label: "Account Report",
     roles: ["Admin"],                  // শুধু Admin
     links: [
       { to: "/dashboard/daily-expense", label: "Daily Expense Report", Icon: ClipboardList },
@@ -87,24 +94,36 @@ export const NAV_ITEMS = [
       
     ],
   },
-
   {
-    label: "User Management",
+    label: "Setup",
     roles: ["Admin"],                  // শুধু Admin
     links: [
-      { to: "/dashboard/user-management", label: "User Management", Icon: ClipboardList },
+      { to: "/dashboard/chart-account", label: "Chart of Account", Icon: Wrench },
+      { to: "/dashboard/customer", label: "Customer Info", Icon: Wrench },
+      { to: "/dashboard/supplier", label: "Supplier Info", Icon: Wrench },
+       { to: "/dashboard/item", label: "Item", Icon: ClipboardList },
+       { to: "/dashboard/user-management", label: "User Management", Icon: ClipboardList },
       { to: "/dashboard/module", label: "Module", Icon: ClipboardList },
       { to: "/dashboard/role", label: "Role", Icon: FileText },
       { to: "/dashboard/permission", label: "Permission", Icon: FileText },
+      
     ],
   },
+
+  // {
+  //   label: "User Management",
+  //   roles: ["Admin"],                  // শুধু Admin
+  //   links: [
+      
+  //   ],
+  // },
   {
     label: "Inventory",
     roles: ["Admin", "Inventory"],     // Admin + Inventory উভয়ই
     links: [
       { to: "/dashboard/inventory", label: "Inventory", Icon: ClipboardList },
       { to: "/dashboard/dispatch", label: "Dispatch", Icon: FileText },
-      { to: "/dashboard/item", label: "Item", Icon: ClipboardList },
+     
       { to: "/dashboard/item-stock", label: "Item Stock", Icon: FileText },
     ],
   },

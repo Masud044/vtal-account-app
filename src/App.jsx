@@ -36,6 +36,11 @@ import { NuqsAdapter } from "nuqs/adapters/react";
 import UserDetailsPage from "./features/user-management/user-details";
 import SupplierPage from "./features/supplier";
 import CustomerPage from "./features/customer";
+import JournalCreate from "./features/main-entry/pages/JournalCreate";
+import JournalEdit from "./features/main-entry/pages/JournalEdit";
+import PaymentCreate from "./features/main-entry/pages/PaymentCreate";
+import PaymentEdit from "./features/main-entry/pages/PaymentEdit";
+import CashTransferCreate from "./features/main-entry/pages/CashTransferCreate";
 
 const ADMIN = ["Admin"];
 const ADMIN_INVENTORY = ["Admin", "Inventory"];
@@ -139,10 +144,19 @@ function App() {
                 }
               />
               <Route
-                path="payment-voucher/:voucherId"
+                path="payment-create"
                 element={
                   <ProtectedRoute anyRole={ADMIN}>
-                    <Payment />
+                    <PaymentCreate />
+                  </ProtectedRoute>
+                }
+              />
+
+               <Route
+                path="payment-edit/:voucherId"
+                element={
+                  <ProtectedRoute anyRole={ADMIN}>
+                    <PaymentEdit />
                   </ProtectedRoute>
                 }
               />
@@ -155,10 +169,18 @@ function App() {
                 }
               />
               <Route
-                path="journal-voucher/:voucherId"
+                path="journal-create"
                 element={
                   <ProtectedRoute anyRole={ADMIN}>
-                    <Journal />
+                    <JournalCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="journal-edit/:voucherId"
+                element={
+                  <ProtectedRoute anyRole={ADMIN}>
+                    <JournalEdit />
                   </ProtectedRoute>
                 }
               />
@@ -187,7 +209,7 @@ function App() {
                 }
               />
               <Route
-                path="cash-voucher"
+                path="cash-transfer"
                 element={
                   <ProtectedRoute anyRole={ADMIN}>
                     <CashTransfer />
@@ -195,10 +217,10 @@ function App() {
                 }
               />
               <Route
-                path="cash-voucher/:voucherID"
+                path="cash-transfer-create"
                 element={
                   <ProtectedRoute anyRole={ADMIN}>
-                    <CashTransfer />
+                    <CashTransferCreate />
                   </ProtectedRoute>
                 }
               />

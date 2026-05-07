@@ -22,9 +22,9 @@ import { useCreateChartOfAccount, useChartOfAccounts } from "./queries";
 // ── Schema ────────────────────────────────────────────────────────────────────
 const formSchema = z.object({
   accountName:   z.string().min(1, "Account Name is required").max(50),
-  firstLevelId:  z.string().optional(),  // row ID (a.ID) — backend: WHERE id = :drop_1
-  secondLevelId: z.string().optional(),  // row ID (a.ID) — backend: WHERE id = :drop_2
-  thirdLevelId:  z.string().optional(),  // row ID (a.ID) — backend: WHERE id = :drop_3
+  firstLevelId:  z.string().optional(),
+  secondLevelId: z.string().optional(),
+  thirdLevelId:  z.string().optional(),
   lastLevel:     z.string(),
   enabled:       z.string(),
 });
@@ -43,17 +43,36 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
   const form = useForm({ resolver: zodResolver(formSchema), defaultValues });
   const { formState: { isDirty } } = form;
 
-  // ── Dropdown options — value = String(a.ID) (row primary key) ─────────────
-  // IMPORTANT: backend queries `WHERE id = :drop_X` so value must be the row ID
+  // Watch selected IDs for cascading filter
+  const firstLevelId  = form.watch("firstLevelId");
+  const secondLevelId = form.watch("secondLevelId");
+
+  // ── Cascading dropdown options ─────────────────────────────────────────────
+  // Level 1 — all root accounts (LEBEL === 1)
   const level1Options = useMemo(
-    () => allAccounts.filter((a) => Number(a.LEBEL) === 1), [allAccounts]
+    () => allAccounts.filter((a) => Number(a.LEBEL) === 1),
+    [allAccounts]
   );
-  const level2Options = useMemo(
-    () => allAccounts.filter((a) => Number(a.LEBEL) === 2), [allAccounts]
-  );
-  const level3Options = useMemo(
-    () => allAccounts.filter((a) => Number(a.LEBEL) === 3), [allAccounts]
-  );
+
+  // Level 2 — only children of the selected level-1 account
+  const level2Options = useMemo(() => {
+    if (!firstLevelId) return [];
+    const parent = allAccounts.find((a) => String(a.ID) === firstLevelId);
+    if (!parent) return [];
+    return allAccounts.filter(
+      (a) => Number(a.LEBEL) === 2 && a.PARENT_ACCOUNT_ID === parent.ACCOUNT_ID
+    );
+  }, [allAccounts, firstLevelId]);
+
+  // Level 3 — only children of the selected level-2 account
+  const level3Options = useMemo(() => {
+    if (!secondLevelId) return [];
+    const parent = allAccounts.find((a) => String(a.ID) === secondLevelId);
+    if (!parent) return [];
+    return allAccounts.filter(
+      (a) => Number(a.LEBEL) === 3 && a.PARENT_ACCOUNT_ID === parent.ACCOUNT_ID
+    );
+  }, [allAccounts, secondLevelId]);
 
   useEffect(() => {
     if (open) form.reset(defaultValues);
@@ -61,8 +80,6 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
-    // Build payload — send only the DEEPEST selected level as drop_X
-    // Backend priority: drop_3 > drop_2 > drop_1 and auto-generates account_id
     const payload = {
       account_name: data.accountName,
       lastLevel:    data.lastLevel,
@@ -133,12 +150,13 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
                 </FormItem>
               )} />
 
-              {/* Level Selects — value = String(a.ID) */}
+              {/* Level Selects */}
               <div className="grid grid-cols-2 gap-4">
 
+                {/* First Level */}
                 <FormField control={form.control} name="firstLevelId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Level <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>First Level</FormLabel>
                     <Select
                       disabled={isSubmitting}
                       value={field.value || ""}
@@ -149,12 +167,12 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
                       }}
                     >
                       <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select First Level" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       </FormControl>
                       <SelectContent className="z-106">
                         {level1Options.map((a) => (
                           <SelectItem key={a.ID} value={String(a.ID)}>
-                            {a.ACCOUNT_NAME}
+                            {String(a.ACCOUNT_NAME).trim()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -163,11 +181,12 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
                   </FormItem>
                 )} />
 
+                {/* Second Level — only enabled when level 1 is selected */}
                 <FormField control={form.control} name="secondLevelId" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Second Level</FormLabel>
                     <Select
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !firstLevelId}
                       value={field.value || ""}
                       onValueChange={(val) => {
                         field.onChange(val);
@@ -175,12 +194,12 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
                       }}
                     >
                       <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select Second Level" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={firstLevelId ? "Select" : "Select L1 first"} /></SelectTrigger>
                       </FormControl>
                       <SelectContent className="z-106">
                         {level2Options.map((a) => (
                           <SelectItem key={a.ID} value={String(a.ID)}>
-                            {a.ACCOUNT_NAME}
+                            {String(a.ACCOUNT_NAME).trim()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -190,10 +209,36 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
                 )} />
 
                
-              </div>
 
+              </div>
+             
               {/* Enabled + Last Level */}
               <div className="grid grid-cols-2 gap-4">
+
+                  {/* Third Level — only enabled when level 2 is selected */}
+                <FormField control={form.control} name="thirdLevelId" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Third Level</FormLabel>
+                    <Select
+                      disabled={isSubmitting || !secondLevelId}
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder={secondLevelId ? "Select" : "Select L2 first"} /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="z-106">
+                        {level3Options.map((a) => (
+                          <SelectItem key={a.ID} value={String(a.ID)}>
+                            {String(a.ACCOUNT_NAME).trim()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
                 <FormField control={form.control} name="enabled" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Enabled</FormLabel>
@@ -213,32 +258,9 @@ export default function AddChartSheet({ open, onOpenChange, showConfirmation }) 
                   </FormItem>
                 )} />
 
-                 <FormField control={form.control} name="thirdLevelId" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Third Level</FormLabel>
-                    <Select
-                      disabled={isSubmitting}
-                      value={field.value || ""}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select Third Level" /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="z-106">
-                        {level3Options.map((a) => (
-                          <SelectItem key={a.ID} value={String(a.ID)}>
-                            {a.ACCOUNT_NAME}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-               
+              
               </div>
-               <FormField control={form.control} name="lastLevel" render={({ field }) => (
+                <FormField control={form.control} name="lastLevel" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Last Level</FormLabel>
                     <FormControl>

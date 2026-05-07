@@ -11,14 +11,15 @@ import {
   ArrowUpDown,
   ChevronDown,
   Pencil,
+  Trash2,
+  PlusIcon,
   Download,
   FileText,
   FileSpreadsheet,
   BadgeCheck,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import {  useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,9 +46,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
 import { DataTablePagination } from "@/components/DataTablePagination";
 import { toast } from "react-toastify";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
@@ -57,7 +58,10 @@ export default function JournalTable() {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
+  // const [deleteModal, setDeleteModal] = useState({ show: false, id: null, voucherNo: "" });
   const [downloading, setDownloading] = useState(null);
+
+  // const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["unpostedJournalVouchers"],
@@ -66,6 +70,34 @@ export default function JournalTable() {
       return res.data;
     },
   });
+
+  // const deleteMutation = useMutation({
+  //   mutationFn: async (voucherId) => {
+  //     const res = await axios.delete(`${BASE_URL}/api/gl-delete/${voucherId}`);
+  //     return res.data;
+  //   },
+  //   onSuccess: (data) => {
+  //     if (data.success === 1 || data.status === "success") {
+  //       toast.success("Voucher deleted successfully!");
+  //       queryClient.invalidateQueries(["unpostedJournalVouchers"]);
+  //     } else {
+  //       toast.error(data.message || "Delete failed!");
+  //     }
+  //     setDeleteModal({ show: false, id: null, voucherNo: "" });
+  //   },
+  //   onError: (error) => {
+  //     toast.error("Error deleting voucher: " + error.message);
+  //     setDeleteModal({ show: false, id: null, voucherNo: "" });
+  //   },
+  // });
+
+  // const handleDeleteClick = (voucher) => {
+  //   setDeleteModal({ show: true, id: voucher.ID, voucherNo: voucher.VOUCHERNO });
+  // };
+
+  // const confirmDelete = () => {
+  //   if (deleteModal.id) deleteMutation.mutate(deleteModal.id);
+  // };
 
   const sortedVouchers = useMemo(() => {
     const vouchers = Array.isArray(data?.data) ? data.data : [];
@@ -91,18 +123,17 @@ export default function JournalTable() {
         return;
       }
 
-      const blob      = await response.blob();
+      const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
-      const anchor    = document.createElement("a");
-      const ext       = type === "pdf" ? "pdf" : "xlsx";
+      const anchor = document.createElement("a");
+      const ext = type === "pdf" ? "pdf" : "xlsx";
 
-      anchor.href     = objectUrl;
+      anchor.href = objectUrl;
       anchor.download = `journal_voucher_${voucher.VOUCHERNO}.${ext}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-
       toast.success(`${type.toUpperCase()} downloaded successfully!`);
     } catch (err) {
       console.error(`[handleDownload] journal ${type} error:`, err);
@@ -120,7 +151,7 @@ export default function JournalTable() {
           Voucher No <ArrowUpDown />
         </Button>
       ),
-      cell: ({ row }) => <div className="ml-2">{row.getValue("VOUCHERNO")}</div>,
+      cell: ({ row }) => <div className="ml-3">{row.getValue("VOUCHERNO")}</div>,
     },
     {
       accessorKey: "TRANS_DATE",
@@ -161,7 +192,8 @@ export default function JournalTable() {
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("DEBIT") || 0);
         const formatted = new Intl.NumberFormat("en-US", {
-          minimumFractionDigits: 2, maximumFractionDigits: 2,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }).format(amount);
         return <div className="font-medium ml-3">{formatted}</div>;
       },
@@ -176,7 +208,8 @@ export default function JournalTable() {
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("CREDIT") || 0);
         const formatted = new Intl.NumberFormat("en-US", {
-          minimumFractionDigits: 2, maximumFractionDigits: 2,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }).format(amount);
         return <div className="font-medium ml-3">{formatted}</div>;
       },
@@ -192,20 +225,20 @@ export default function JournalTable() {
         return (
           <div className="flex items-center justify-center gap-1">
 
-            {/* Edit — approved হলে disabled */}
+            {/* Edit — disabled when approved */}
             {isApproved ? (
               <Button variant="ghost" size="icon" disabled className="opacity-30 cursor-not-allowed">
                 <Pencil size={16} />
               </Button>
             ) : (
-              <Link to={`/dashboard/journal-voucher/${voucher.ID}`} title="Edit Voucher">
+              <Link to={`/dashboard/journal-edit/${voucher.ID}`} title="Edit Voucher">
                 <Button variant="ghost" size="icon">
                   <Pencil size={16} />
                 </Button>
               </Link>
             )}
 
-            {/* Download — সবসময় active */}
+            {/* Download — always active */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -242,8 +275,8 @@ export default function JournalTable() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Approved tooltip icon — approved হলে দেখাবে */}
-            {isApproved && (
+            {/* Approved badge OR Delete */}
+            {isApproved ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -256,8 +289,15 @@ export default function JournalTable() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+            ) : (
+              <Button
+                size="icon"
+                onClick={() => console.log(voucher)}
+                title="Delete Voucher"
+              >
+                <Trash2 size={16} />
+              </Button>
             )}
-
           </div>
         );
       },
@@ -300,86 +340,121 @@ export default function JournalTable() {
 
   return (
     <>
-      <Helmet>
-        <title>Dashboard | Journal Vouchers | HRMS</title>
-      </Helmet>
+      <div className="mt-6">
+        <Card className="w-full shadow-lg">
+          <CardHeader className="border-b">
+            <CardTitle className="text-sm font-bold">Journal Vouchers</CardTitle>
+          </CardHeader>
 
-      <div className="min-h-screen">
-        <div className="bg-card rounded-md mt-4 shadow-sm p-4">
-          <div className="space-y-4">
-
-            {/* Search + Column visibility */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input
-                placeholder="Search vouchers..."
-                value={globalFilter ?? ""}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="max-w-sm"
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
-                    Columns <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {table
-                    .getAllColumns()
-                    .filter((col) => col.getCanHide())
-                    .map((col) => (
-                      <DropdownMenuCheckboxItem
-                        key={col.id}
-                        className="capitalize"
-                        checked={col.getIsVisible()}
-                        onCheckedChange={(value) => col.toggleVisibility(!!value)}
-                      >
-                        {col.id.replace(/_/g, " ")}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-hidden rounded-md border">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((hg) => (
-                    <TableRow key={hg.id}>
-                      {hg.headers.map((h) => (
-                        <TableHead key={h.id}>
-                          {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
-                        </TableHead>
+          <div className="bg-card rounded-md p-4">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Input
+                  placeholder="Search vouchers..."
+                  value={globalFilter ?? ""}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  className="max-w-sm"
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="ml-auto">
+                      Columns <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {table
+                      .getAllColumns()
+                      .filter((col) => col.getCanHide())
+                      .map((col) => (
+                        <DropdownMenuCheckboxItem
+                          key={col.id}
+                          className="capitalize"
+                          checked={col.getIsVisible()}
+                          onCheckedChange={(value) => col.toggleVisibility(!!value)}
+                        >
+                          {col.id.replace(/_/g, " ")}
+                        </DropdownMenuCheckboxItem>
                       ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Link to="/dashboard/journal-create">
+                  <Button>
+                    <PlusIcon size={16} className="mr-2" />
+                    Add New Journal
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="overflow-hidden rounded-md border">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((hg) => (
+                      <TableRow key={hg.id}>
+                        {hg.headers.map((h) => (
+                          <TableHead key={h.id}>
+                            {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                          </TableHead>
                         ))}
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={columns.length} className="h-24 text-center">
-                        <p className="text-muted-foreground">No unposted vouchers found</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                          <p className="text-muted-foreground">No unposted vouchers found</p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
 
-            <DataTablePagination table={table} />
+              <DataTablePagination table={table} />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {/* {deleteModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-6 w-11/12 md:w-96 shadow-xl">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Confirm Delete</h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete voucher{" "}
+              <span className="font-semibold">{deleteModal.voucherNo}</span>?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteModal({ show: false, id: null, voucherNo: "" })}
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )} */}
     </>
   );
 }

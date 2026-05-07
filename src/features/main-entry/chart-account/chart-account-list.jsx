@@ -10,12 +10,10 @@ import {
 import {
   ArrowUpDown,
   ChevronDown,
-  Trash2,
-  AlertCircle,
   RefreshCw,
   BookOpen,
+  AlertCircle,
 } from "lucide-react";
-// import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,15 +44,23 @@ import { useChartOfAccounts } from "./queries";
 import AddChartSheet from "./add-chart-account-sheet";
 import UpdateChartSheet from "./update-chart-account-sheet";
 
+// Level badge colors
+const LEVEL_COLORS = {
+  1: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+  2: "bg-blue-100   text-blue-800   dark:bg-blue-900/30   dark:text-blue-300",
+  3: "bg-teal-100   text-teal-800   dark:bg-teal-900/30   dark:text-teal-300",
+  4: "bg-amber-100  text-amber-800  dark:bg-amber-900/30  dark:text-amber-300",
+};
+
 export default function ChartList() {
-  const [sorting, setSorting]               = useState([]);
-  const [columnFilters, setColumnFilters]   = useState([]);
+  const [sorting, setSorting]                   = useState([]);
+  const [columnFilters, setColumnFilters]       = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [rowSelection, setRowSelection]     = useState({});
-  const [globalFilter, setGlobalFilter]     = useState("");
-  const [isAddSheetOpen, setIsAddSheetOpen]       = useState(false);
-  const [isUpdateSheetOpen, setIsUpdateSheetOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount]     = useState(null);
+  const [rowSelection, setRowSelection]         = useState({});
+  const [globalFilter, setGlobalFilter]         = useState("");
+  const [isAddSheetOpen, setIsAddSheetOpen]         = useState(false);
+  const [isUpdateSheetOpen, setIsUpdateSheetOpen]   = useState(false);
+  const [selectedAccount, setSelectedAccount]       = useState(null);
 
   const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
 
@@ -67,38 +73,21 @@ export default function ChartList() {
     isFetching,
   } = useChartOfAccounts();
 
-//   const deleteMutation = useDeleteChartOfAccount();
-
   const handleEdit = (account) => {
     setSelectedAccount(account);
     setIsUpdateSheetOpen(true);
   };
 
-//   const handleDelete = async (account) => {
-//     const confirmed = await showConfirmation({
-//       title: "Delete account?",
-//       description: `Are you sure you want to delete "${account.ACCOUNT_NAME}"? This action cannot be undone.`,
-//       confirmText: "Delete",
-//       cancelText: "Cancel",
-//       variant: "destructive",
-//     });
-//     if (confirmed) {
-//       try {
-//         await deleteMutation.mutateAsync(account.ID);
-//         toast.success("Account deleted successfully!");
-//       } catch (err) {
-//         toast.error(err?.message || "Failed to delete account.");
-//       }
-//     }
-//   };
-
   const columns = [
-    // Select
+    // ── Select ──────────────────────────────────────────────────────────────
     {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
           aria-label="Select all"
         />
@@ -114,89 +103,118 @@ export default function ChartList() {
       enableHiding: false,
     },
 
-    // Account ID
+    // ── Account ID ───────────────────────────────────────────────────────────
     {
       accessorKey: "ACCOUNT_ID",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           Account ID <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="font-mono text-sm text-muted-foreground">{row.getValue("ACCOUNT_ID")}</div>
+        <span className="font-mono text-sm text-muted-foreground">
+          {row.getValue("ACCOUNT_ID")}
+        </span>
       ),
     },
 
-    // Account Name
+    // ── Account Name (trim spaces, show indent via padding) ──────────────────
     {
       accessorKey: "ACCOUNT_NAME",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           Account Name <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
+      cell: ({ row }) => {
+        const level  = row.getValue("LEBEL") ?? 1;
+        const name   = String(row.getValue("ACCOUNT_NAME") ?? "").trim();
+        const indent = (level - 1) * 16; // 16px per level
+        return (
+          <span
+            className="font-medium block"
+            style={{ paddingLeft: `${indent}px` }}
+          >
+            {name || "—"}
+          </span>
+        );
+      },
+      // globalFilter এ trimmed name দিয়ে match হবে
+      filterFn: (row, _, filterValue) =>
+        String(row.getValue("ACCOUNT_NAME"))
+          .trim()
+          .toLowerCase()
+          .includes(filterValue.toLowerCase()),
+    },
+
+    // ── Root Account ─────────────────────────────────────────────────────────
+    {
+      accessorKey: "ROOT_ACCOUNT",
+      header: "Root",
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("ACCOUNT_NAME") || "—"}</div>
+        <Badge variant="outline" className="text-xs  font-normal">
+          {row.getValue("ROOT_ACCOUNT") || "—"}
+        </Badge>
       ),
     },
 
-    // Parent Account ID
-    // {
-    //   accessorKey: "PARENT_ACCOUNT_ID",
-    //   header: "Parent",
-    //   cell: ({ row }) => {
-    //     const val = row.getValue("PARENT_ACCOUNT_ID");
-    //     return (
-    //       <div className="font-mono text-xs text-muted-foreground">
-    //         {!val || val === "0" ? <span className="text-muted-foreground/50 italic">Root</span> : val}
-    //       </div>
-    //     );
-    //   },
-    // },
-
-    // Level
+    // ── Level ────────────────────────────────────────────────────────────────
     {
       accessorKey: "LEBEL",
       header: "Level",
       cell: ({ row }) => {
         const lvl = row.getValue("LEBEL");
-        const colors = {
-          1: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-          2: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-          3: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300",
-          4: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-        };
         return (
-          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colors[lvl] || "bg-gray-100 text-gray-800"}`}>
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              LEVEL_COLORS[lvl] ?? "bg-gray-100 text-gray-800"
+            }`}
+          >
             L{lvl}
           </span>
         );
       },
     },
 
-    // Last Level
+    // ── Is Leaf ──────────────────────────────────────────────────────────────
     {
-      accessorKey: "LASTLEVEL",
-      header: "Last Level",
-      cell: ({ row }) => (
-        <Badge variant={row.getValue("LASTLEVEL") === 1 ? "success" : "secondary"}>
-          {row.getValue("LASTLEVEL") === 1 ? "Yes" : "No"}
-        </Badge>
-      ),
+      accessorKey: "IS_LEAF",
+      header: "Type",
+      cell: ({ row }) => {
+        const isLeaf = row.getValue("IS_LEAF") === 1;
+        return (
+          <Badge variant={isLeaf ? "success" : "secondary"}>
+            {isLeaf ? "Leaf" : "Parent"}
+          </Badge>
+        );
+      },
     },
 
-    // Enabled
+    // ── Full Path ────────────────────────────────────────────────────────────
     {
-      accessorKey: "ENABLED",
-      header: "Enabled",
-      cell: ({ row }) => (
-        <Badge variant={row.getValue("ENABLED") === 1 ? "success" : "secondary"}>
-          {row.getValue("ENABLED") === 1 ? "Yes" : "No"}
-        </Badge>
-      ),
+      accessorKey: "FULL_PATH",
+      header: "Full Path",
+      cell: ({ row }) => {
+        // strip leading " > " produced by SYS_CONNECT_BY_PATH
+        const path = String(row.getValue("FULL_PATH") ?? "").replace(/^\s*>\s*/, "");
+        return (
+          <span
+            className="text-xs text-muted-foreground max-w-[260px] block truncate"
+            title={path}
+          >
+            {path || "—"}
+          </span>
+        );
+      },
     },
 
-    // Actions
+    // ── Actions ──────────────────────────────────────────────────────────────
     {
       id: "actions",
       header: "Actions",
@@ -204,24 +222,15 @@ export default function ChartList() {
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(account)}>
-              <IconEdit className="h-4 w-4" />
-              <span className="sr-only">Edit</span>
-            </Button>
-            {/* <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => handleDelete(account)}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending
-                ? <Spinner data-icon="inline-start" />
-                : <Trash2 className="h-4 w-4" />}
-              <span className="sr-only">Delete</span>
-            </Button> */}
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleEdit(account)}
+          >
+            <IconEdit className="h-4 w-4" />
+            <span className="sr-only">Edit</span>
+          </Button>
         );
       },
     },
@@ -240,8 +249,8 @@ export default function ChartList() {
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     state: { sorting, columnFilters, columnVisibility, rowSelection, globalFilter },
-    autoResetPageIndex: false,   // sort/filter এ page reset হবে না
-  enableMultiSort: false,      // একবারে একটাই column sort
+    autoResetPageIndex: false,
+    enableMultiSort: false,
   });
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -250,8 +259,12 @@ export default function ChartList() {
       <div>
         <div className="bg-card rounded-sm shadow-sm p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Chart of Account</h1>
-            <Button disabled><IconCircleDashedPlus className="mr-1" />Add Account</Button>
+            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">
+              Chart of Account
+            </h1>
+            <Button disabled>
+              <IconCircleDashedPlus className="mr-1" />Add Account
+            </Button>
           </div>
         </div>
         <div className="bg-card rounded-lg shadow-sm p-4">
@@ -270,7 +283,9 @@ export default function ChartList() {
       <div>
         <div className="bg-card rounded-sm shadow-sm p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Chart of Account</h1>
+            <h1 className="text-lg md:text-2xl font-semibold tracking-tight">
+              Chart of Account
+            </h1>
             <Button onClick={() => setIsAddSheetOpen(true)}>
               <IconCircleDashedPlus className="mr-1" />Add Account
             </Button>
@@ -282,10 +297,18 @@ export default function ChartList() {
             <AlertTitle>Error Loading Accounts</AlertTitle>
             <AlertDescription className="mt-2 flex flex-col gap-2">
               <p>{error?.message || "Failed to load accounts."}</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="w-fit">
-                {isFetching
-                  ? <><Spinner className="mr-2 h-4 w-4" />Retrying...</>
-                  : <><RefreshCw className="mr-2 h-4 w-4" />Retry</>}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="w-fit"
+              >
+                {isFetching ? (
+                  <><Spinner className="mr-2 h-4 w-4" />Retrying...</>
+                ) : (
+                  <><RefreshCw className="mr-2 h-4 w-4" />Retry</>
+                )}
               </Button>
             </AlertDescription>
           </Alert>
@@ -294,12 +317,15 @@ export default function ChartList() {
     );
   }
 
+  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div>
       {/* Header */}
       <div className="bg-card rounded-md shadow-sm p-4 mb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-lg md:text-2xl font-semibold tracking-tight">Chart of Account</h1>
+          <h1 className="text-lg md:text-2xl font-semibold tracking-tight">
+            Chart of Account
+          </h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
@@ -315,9 +341,10 @@ export default function ChartList() {
       {/* Table */}
       <div className="bg-card rounded-md shadow-sm p-4">
         <div className="space-y-4">
+          {/* Toolbar */}
           <div className="flex flex-col sm:flex-row gap-4">
             <Input
-              placeholder="Search by name, account ID..."
+              placeholder="Search by name or account ID..."
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               className="max-w-sm"
@@ -329,20 +356,24 @@ export default function ChartList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {table.getAllColumns().filter((col) => col.getCanHide()).map((col) => (
-                  <DropdownMenuCheckboxItem
-                    key={col.id}
-                    className="capitalize"
-                    checked={col.getIsVisible()}
-                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
-                  >
-                    {col.id.replace(/_/g, " ").toLowerCase()}
-                  </DropdownMenuCheckboxItem>
-                ))}
+                {table
+                  .getAllColumns()
+                  .filter((col) => col.getCanHide())
+                  .map((col) => (
+                    <DropdownMenuCheckboxItem
+                      key={col.id}
+                      className="capitalize"
+                      checked={col.getIsVisible()}
+                      onCheckedChange={(v) => col.toggleVisibility(!!v)}
+                    >
+                      {col.id.replace(/_/g, " ").toLowerCase()}
+                    </DropdownMenuCheckboxItem>
+                  ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
+          {/* Table */}
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
@@ -350,7 +381,9 @@ export default function ChartList() {
                   <TableRow key={hg.id}>
                     {hg.headers.map((h) => (
                       <TableHead key={h.id}>
-                        {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                        {h.isPlaceholder
+                          ? null
+                          : flexRender(h.column.columnDef.header, h.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -359,17 +392,26 @@ export default function ChartList() {
               <TableBody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
                       <Empty>
                         <EmptyHeader>
                           <EmptyMedia variant="icon"><BookOpen /></EmptyMedia>
