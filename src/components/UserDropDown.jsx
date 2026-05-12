@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   BadgeCheckIcon,
   BellIcon,
@@ -17,11 +17,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { useAuthV2 } from "@/features/authentication-v2/use-auth-v2"; // ← নতুন
+import { useAuthV2 } from "@/features/authentication-v2/use-auth-v2";
 
 export default function UserDropDown() {
-  const { user, logout } = useAuthV2(); // ← নতুন hook
+  const { user, logout } = useAuthV2();
   const navigate = useNavigate();
+  const BASE = import.meta.env.VITE_API_BASE_URL;
+
+  const [avatarTs, setAvatarTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const handler = () => setAvatarTs(Date.now());
+    window.addEventListener("avatar-updated", handler);
+    return () => window.removeEventListener("avatar-updated", handler);
+  }, []);
+
+  const avatarSrc = user?.id
+    ? `${BASE}/api/emp-images/person/${user.id}?t=${avatarTs}`
+    : user?.avatar;
 
   const handleLogout = async () => {
     await logout();
@@ -34,7 +47,7 @@ export default function UserDropDown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-8 w-8 rounded-lg cursor-pointer">
-          <AvatarImage src={user.avatar} alt={user.username} />
+          <AvatarImage src={avatarSrc} alt={user.username} />
           <AvatarFallback className="rounded-lg">
             {user.username?.slice(0, 2).toUpperCase() || "U"}
           </AvatarFallback>
@@ -48,13 +61,12 @@ export default function UserDropDown() {
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <Avatar className="size-8 rounded-lg">
-              <AvatarImage src={user.avatar} alt={user.username} />
+              <AvatarImage src={avatarSrc} alt={user.username} />
               <AvatarFallback className="rounded-lg">
                 {user.username?.slice(0, 2).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              {/* backend থেকে username আর employee_id আসে */}
               <span className="truncate font-semibold">{user.username}</span>
               <span className="text-muted-foreground truncate text-xs">
                 Role: {user.roles} user

@@ -114,6 +114,8 @@ export default function Navbar() {
   const isMobile = useIsMobile();
   const { user } = useAuthV2(); // ← যোগ করো
   console.log(user?.roles);
+  // temporarily add করো
+console.log("auth user:", user);
 
   // Role check helper
   
