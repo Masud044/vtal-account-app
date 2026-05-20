@@ -41,6 +41,7 @@ import JournalEdit from "./features/main-entry/pages/JournalEdit";
 import PaymentCreate from "./features/main-entry/pages/PaymentCreate";
 import PaymentEdit from "./features/main-entry/pages/PaymentEdit";
 import CashTransferCreate from "./features/main-entry/pages/CashTransferCreate";
+import SaleExpenseReportPage from "./features/account-report/sale-report";
 
 const ADMIN = ["Admin"];
 const ADMIN_INVENTORY = ["Admin", "Inventory"];
@@ -221,6 +222,16 @@ function App() {
                 element={
                   <ProtectedRoute anyRole={ADMIN}>
                     <CashTransferCreate />
+                  </ProtectedRoute>
+                }
+              />
+              {/* account report route */}
+
+              <Route
+                path="sale-report"
+                element={
+                  <ProtectedRoute anyRole={ADMIN}>
+                    <SaleExpenseReportPage />
                   </ProtectedRoute>
                 }
               />
