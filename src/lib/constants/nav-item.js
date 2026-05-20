@@ -88,6 +88,7 @@ export const NAV_ITEMS = [
     links: [
       { to: "/dashboard/daily-expense", label: "Daily Expense Report", Icon: ClipboardList },
       { to: "/dashboard/daily-income", label: "Daily Income Report", Icon: ClipboardList },
+       { to: "/dashboard/sale-report", label: "Sale Expense Report", Icon: ClipboardList },
       { to: "/dashboard/ledger", label: "Ledger", Icon: FileText },
       { to: "/dashboard/cash-book", label: "Cash Book", Icon: FileText },
       { to: "/dashboard/cash-book", label: "Cash Book", Icon: FileText },
