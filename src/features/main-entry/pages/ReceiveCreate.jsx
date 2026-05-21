@@ -39,7 +39,7 @@ const ReceiveCreate = () => {
   const [form, setForm] = useState({
     entryDate: today, invoiceNo: "", supporting: "", description: "",
     customer: "", glDate: today, ReceiveCode: "",
-    accountId: "", particular: "", amount: "", totalAmount: 0,
+    accountId: "", particular: "", amount: "", totalAmount: 0, inv_type: "",
   });
 
   // ── Queries ──────────────────────────────────────────────────────────────────
@@ -55,6 +55,14 @@ const ReceiveCreate = () => {
       return res.data.success ? res.data.data || [] : [];
     },
   });
+
+  const { data: invTypes = [] } = useQuery({
+  queryKey: ["invTypes"],
+  queryFn: async () => {
+    const res = await axios.get(`${url}/api/inv-type`); 
+    return res.data.data || [];
+  },
+});
 
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
@@ -93,7 +101,7 @@ const ReceiveCreate = () => {
         setForm({
           entryDate: today, invoiceNo: "", supporting: "", description: "",
           customer: "", glDate: today, ReceiveCode: "",
-          accountId: "", particular: "", amount: "", totalAmount: 0,
+          accountId: "", particular: "", amount: "", totalAmount: 0, inv_type: "",
         });
         setRows([{ id: "dummy", accountCode: "", particulars: "", amount: 0 }]);
         queryClient.invalidateQueries(["unpostedVouchers"]);
@@ -198,6 +206,7 @@ const ReceiveCreate = () => {
       totalAmount:  Number(form.totalAmount),
       accountID:    rows.map((r) => r.accountCode),
       amount2:      rows.map((r) => Number(r.amount || 0)),
+      inv_type: form.inv_type ? Number(form.inv_type) : null,
     });
   };
 
@@ -271,6 +280,22 @@ const ReceiveCreate = () => {
                 />
               </div>
             ))}
+
+            {/* Customer select-এর পরে এই block যোগ করো */}
+<div className="grid grid-cols-3 px-3 items-center py-3">
+  <label className="font-bold text-sm text-gray-800">Type</label>
+  <select
+    value={form.inv_type}
+    onChange={(e) => setForm({ ...form, inv_type: e.target.value })}
+    disabled={isSubmitting}
+    className="col-span-2 w-full border rounded py-1 h-8 bg-white"
+  >
+    <option value="">Select type</option>
+    {invTypes.map((t) => (
+      <option key={t.ID} value={String(t.ID)}>{t.DESCRIPTIO}</option>
+    ))}
+  </select>
+</div>
 
             <div className="grid grid-cols-3 px-3 items-center">
               <label className="font-bold text-sm text-gray-800">Receive Code</label>
