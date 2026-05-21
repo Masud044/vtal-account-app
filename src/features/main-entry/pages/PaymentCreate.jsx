@@ -41,7 +41,7 @@ const PaymentCreate = () => {
   const [form, setForm] = useState({
     entryDate: today, invoiceNo: "", supporting: "", description: "",
     supplier: "", glDate: today, paymentCode: "",
-    accountId: "", particular: "", amount: "", totalAmount: 0,
+    accountId: "", particular: "", amount: "", totalAmount: 0,  inv_type: "",
   });
 
   // ── Queries ──────────────────────────────────────────────────────────────────
@@ -57,6 +57,14 @@ const PaymentCreate = () => {
       return res.data.success ? res.data.data || [] : [];
     },
   });
+
+  const { data: invTypes = [] } = useQuery({
+  queryKey: ["invTypes"],
+  queryFn: async () => {
+    const res = await axios.get(`${url}/api/inv-type`); // আপনার endpoint
+    return res.data.data || [];
+  },
+});
 
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
@@ -98,7 +106,7 @@ const PaymentCreate = () => {
         setForm({
           entryDate: today, invoiceNo: "", supporting: "", description: "",
           supplier: "", glDate: today, paymentCode: "",
-          accountId: "", particular: "", amount: "", totalAmount: 0,
+          accountId: "", particular: "", amount: "", totalAmount: 0, inv_type: "",
         });
         setRows([{ id: "dummy", accountCode: "", particulars: "", amount: 0 }]);
         queryClient.invalidateQueries(["unpostedPaymentVouchers"]);
@@ -205,6 +213,7 @@ const PaymentCreate = () => {
       totalAmount:  String(form.totalAmount),
       accountID:    rows.map((r) => r.accountCode),
       amount2:      rows.map((r) => String(r.amount || 0)),
+      inv_type: form.inv_type ? Number(form.inv_type) : null, 
     });
   };
 
@@ -278,6 +287,22 @@ const PaymentCreate = () => {
                 />
               </div>
             ))}
+
+            {/* Customer select-এর পরে এই block যোগ করো */}
+<div className="grid grid-cols-3 px-3 items-center py-3">
+  <label className="font-bold text-sm text-gray-800">Type</label>
+  <select
+    value={form.inv_type}
+    onChange={(e) => setForm({ ...form, inv_type: e.target.value })}
+    disabled={isSubmitting}
+    className="col-span-2 w-full border rounded py-1 h-8 bg-white"
+  >
+    <option value="">Select type</option>
+    {invTypes.map((t) => (
+      <option key={t.ID} value={String(t.ID)}>{t.DESCRIPTIO}</option>
+    ))}
+  </select>
+</div>
 
             <div className="grid grid-cols-3 px-3 items-center">
               <label className="font-bold text-sm text-gray-800">Payment Code</label>

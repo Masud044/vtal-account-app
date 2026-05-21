@@ -85,6 +85,14 @@ const PaymentEdit = () => {
     },
   });
 
+  const { data: invTypes = [] } = useQuery({
+  queryKey: ["invTypes"],
+  queryFn: async () => {
+    const res = await axios.get(`${url}/api/inv-type`); // আপনার endpoint
+    return res.data.data || [];
+  },
+});
+
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
@@ -154,6 +162,7 @@ const PaymentEdit = () => {
       paymentCode: master.CASHACCOUNT || "",
       creditId:    creditEntry ? (creditEntry.ID ?? creditEntry.id ?? null) : null,
       totalAmount: total,
+       inv_type: master.INV_TYPE ? String(master.INV_TYPE) : "",
     }));
 
     setRows(mappedRows);
@@ -290,6 +299,7 @@ const PaymentEdit = () => {
       supplierid:   form.supplier,
       totalAmount:  Number(form.totalAmount),
       supporting:   String(form.supporting),
+      inv_type: form.inv_type ? Number(form.inv_type) : null, 
 
       ...(existingRows.length ? {
         DEBIT_ID:        existingRows.map((r) => Number(r.debitId)),
@@ -386,6 +396,22 @@ const PaymentEdit = () => {
                 />
               </div>
             ))}
+
+            {/* Customer select-এর পরে এই block যোগ করো */}
+<div className="grid grid-cols-3 px-3 items-center py-3">
+  <label className="font-bold text-sm text-gray-800">Type</label>
+  <select
+    value={form.inv_type}
+    onChange={(e) => setForm({ ...form, inv_type: e.target.value })}
+    disabled={isSubmitting}
+    className="col-span-2 w-full border rounded py-1 h-8 bg-white"
+  >
+    <option value="">Select type</option>
+    {invTypes.map((t) => (
+      <option key={t.ID} value={String(t.ID)}>{t.DESCRIPTIO}</option>
+    ))}
+  </select>
+</div>
 
             <div className="grid grid-cols-3 px-3 items-center">
               <label className="font-bold text-sm text-gray-800">Payment Code</label>
