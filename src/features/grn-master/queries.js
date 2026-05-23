@@ -1,18 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/grn`;
-const STORE_API = `${import.meta.env.VITE_API_BASE_URL}/api/stores`;
-const ITEM_STOCK_API = `${import.meta.env.VITE_API_BASE_URL}/api/item-stock`;
-const ITEMS_API = `${import.meta.env.VITE_API_BASE_URL}/api/item`;
-const UOM_API = `${import.meta.env.VITE_API_BASE_URL}/api/inv-uom`;
+const API_BASE      = `${import.meta.env.VITE_API_BASE_URL}/api/grn`;
+const STORE_API     = `${import.meta.env.VITE_API_BASE_URL}/api/stores`;
+const ITEM_STOCK_API= `${import.meta.env.VITE_API_BASE_URL}/api/item-stock`;
+const ITEMS_API     = `${import.meta.env.VITE_API_BASE_URL}/api/item`;
+const UOM_API       = `${import.meta.env.VITE_API_BASE_URL}/api/inv-uom`;
 
 const grnQueryKeys = {
-  all: ["grn"],
-  lists: () => [...grnQueryKeys.all, "list"],
-  detail: (id) => [...grnQueryKeys.all, "detail", id],
-  stores: ["stores"],
+  all:          ["grn"],
+  lists:        () => [...grnQueryKeys.all, "list"],
+  detail:       (id) => [...grnQueryKeys.all, "detail", id],
+  stores:       ["stores"],
   itemsByStore: (storeId) => ["item-stock", "by-store", storeId],
-  items: ["items"],
+  items:        ["items"],
 };
 
 const queryDefaults = {
@@ -53,24 +53,6 @@ const createGRN = async (data) => {
   return res.json();
 };
 
-
-
-const getAllUOMs = async () => {
-  const res = await fetch(UOM_API);
-  if (!res.ok) throw new Error(`Failed to fetch UOMs: ${res.status}`);
-  const json = await res.json();
-  return json.data || json;
-};
-
-export const useUOMList = () =>
-  useQuery({
-    queryKey: ["uom"],
-    queryFn: getAllUOMs,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
 const updateGRN = async ({ tid, data }) => {
   const res = await fetch(`${API_BASE}/${tid}`, {
     method: "PUT",
@@ -93,6 +75,32 @@ const deleteGRN = async (tid) => {
   return res.json();
 };
 
+// ── Approve one detail row ───────────────────────────────────────────────────
+// STATUS 1 (Pending) → 2 (Approved)
+// DB trigger INV_UPDATE_STAT fires automatically → updates ITEM_STOCK
+const approveDetailGRN = async ({ masterTid, detailTid }) => {
+  const res = await fetch(`${API_BASE}/${masterTid}/details/${detailTid}/approve`, {
+    method: "PATCH",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to approve: ${res.status}`);
+  }
+  return res.json();
+};
+
+// ── Approve all pending detail rows ─────────────────────────────────────────
+const approveAllGRN = async (masterTid) => {
+  const res = await fetch(`${API_BASE}/${masterTid}/approve-all`, {
+    method: "PATCH",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to approve all: ${res.status}`);
+  }
+  return res.json();
+};
+
 const getStores = async () => {
   const res = await fetch(STORE_API);
   if (!res.ok) throw new Error(`Failed to fetch stores: ${res.status}`);
@@ -110,6 +118,13 @@ const getItemsByStore = async (storeId) => {
 const getAllItems = async () => {
   const res = await fetch(ITEMS_API);
   if (!res.ok) throw new Error(`Failed to fetch items: ${res.status}`);
+  const json = await res.json();
+  return json.data || json;
+};
+
+const getAllUOMs = async () => {
+  const res = await fetch(UOM_API);
+  if (!res.ok) throw new Error(`Failed to fetch UOMs: ${res.status}`);
   const json = await res.json();
   return json.data || json;
 };
@@ -159,6 +174,15 @@ export const useAllItems = () =>
     refetchOnWindowFocus: false,
   });
 
+export const useUOMList = () =>
+  useQuery({
+    queryKey: ["uom"],
+    queryFn: getAllUOMs,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
 export const useCreateGRN = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -186,5 +210,29 @@ export const useDeleteGRN = () => {
     mutationFn: deleteGRN,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: grnQueryKeys.lists() }),
     onError: (err) => console.error("Delete GRN failed:", err),
+  });
+};
+
+// STATUS 1 → 2 per row; trigger updates ITEM_STOCK automatically
+export const useApproveDetailGRN = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: approveDetailGRN,
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: grnQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: grnQueryKeys.detail(vars.masterTid) });
+    },
+  });
+};
+
+// Approve all pending rows under a GRN
+export const useApproveAllGRN = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: approveAllGRN,
+    onSuccess: (_, masterTid) => {
+      queryClient.invalidateQueries({ queryKey: grnQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: grnQueryKeys.detail(masterTid) });
+    },
   });
 };
